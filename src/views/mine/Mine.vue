@@ -48,9 +48,9 @@
     <div class="section-card">
       <van-cell-group :border="false">
         <van-cell title="资金流水" icon="gold-coin-o" is-link />
-        <van-cell title="我的收藏" icon="star-o" is-link />
-        <van-cell title="联系客服" icon="service-o" is-link />
-        <van-cell title="设置" icon="setting-o" is-link />
+        <van-cell title="我的收藏" icon="star-o" is-link to="/favorites" />
+        <van-cell title="联系客服" icon="service-o" is-link @click="contactService" />
+        <van-cell title="设置" icon="setting-o" is-link to="/settings" />
       </van-cell-group>
     </div>
 
@@ -63,8 +63,13 @@
 <script setup>
 import { useRouter } from 'vue-router';
 import { showConfirmDialog } from 'vant';
+import { showToast } from 'vant';
 
 const router = useRouter();
+
+const contactService = () => {
+  showToast('客服微信：kefu8888 \n工作时间：9:00-22:00');
+};
 
 // 跳转登录页（如果未登录）
 const goToLogin = () => {

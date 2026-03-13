@@ -18,6 +18,18 @@ const router = createRouter({
       name: 'Login',
       component: () => import('../views/login/Login.vue')
     },
+    // 👇 新增：我的收藏
+    {
+      path: '/favorites',
+      name: 'Favorites',
+      component: () => import('../views/mine/Favorites.vue')
+    },
+    // 👇 新增：设置页面
+    {
+      path: '/settings',
+      name: 'Settings',
+      component: () => import('../views/mine/Settings.vue')
+    },
     // ---- 需要底部导航的页面写在 Layout 的 children 里 ----
     {
       path: '/',
