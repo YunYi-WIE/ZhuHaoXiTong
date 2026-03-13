@@ -1,111 +1,127 @@
 <template>
-  <div class="login-page">
-    <van-nav-bar title="登录" left-arrow @click-left="goBack" />
-    
-    <div class="login-container">
-      <div class="logo-box">
-        <img src="https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg" class="logo" />
-        <h2>欢迎来到哈基龙小店</h2>
+  <div class="lobby-page">
+    <van-sticky>
+      <div class="header-wrap">
+        <van-search 
+          v-model="searchKeyword" 
+          placeholder="搜索您想要的极品账号" 
+          shape="round" 
+          background="transparent" 
+          class="lobby-search"
+        />
+        
+        <van-dropdown-menu active-color="#ff3b30" class="custom-dropdown">
+          <van-dropdown-item v-model="gameFilter" :options="gameOptions" />
+          <van-dropdown-item v-model="sortFilter" :options="sortOptions" />
+        </van-dropdown-menu>
       </div>
+    </van-sticky>
 
-      <van-tabs v-model:active="activeTab" animated>
-        <van-tab title="验证码登录">
-          <van-form @submit="onSubmit" class="form-box">
-            <van-cell-group inset>
-              <van-field v-model="phone" name="phone" placeholder="请输入手机号" />
-              <van-field v-model="sms" center clearable placeholder="请输入验证码">
-                <template #button>
-                  <van-button size="small" type="primary">发送验证码</van-button>
-                </template>
-              </van-field>
-            </van-cell-group>
-            <div style="margin: 24px 16px;">
-              <van-button round block type="primary" native-type="submit">一键登录</van-button>
-            </div>
-          </van-form>
-        </van-tab>
-
-        <van-tab title="密码登录">
-          <van-form @submit="onSubmit" class="form-box">
-            <van-cell-group inset>
-              <van-field v-model="phone" name="phone" placeholder="请输入手机号" />
-              <van-field v-model="password" type="password" name="password" placeholder="请输入密码" />
-            </van-cell-group>
-            <div style="margin: 24px 16px;">
-              <van-button round block type="primary" native-type="submit">登录</van-button>
-            </div>
-          </van-form>
-        </van-tab>
-      </van-tabs>
-
-      <div class="wechat-login">
-        <van-divider>其他登录方式</van-divider>
-        <van-icon name="wechat" color="#07c160" size="45" @click="wechatLogin" />
-        <p>微信登录</p>
-      </div>
+    <div class="list-container">
+      <van-list
+        v-model:loading="loading"
+        :finished="finished"
+        finished-text="~ 到底啦 ~"
+        @load="onLoad"
+      >
+        <AccountCard 
+          v-for="item in accountList" 
+          :key="item.id" 
+          :item="item" 
+        />
+      </van-list>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import AccountCard from '@/components/AccountCard.vue'; 
 
-const router = useRouter();
-const activeTab = ref(0);
-const phone = ref('');
-const sms = ref('');
-const password = ref('');
+// --- 筛选条件相关数据 ---
+const searchKeyword = ref('');
+const gameFilter = ref(0);
+const sortFilter = ref('default');
 
-const goBack = () => {
-  router.back();
-};
+const gameOptions = [
+  { text: '全部游戏', value: 0 },
+  { text: '王者荣耀', value: 1 },
+  { text: '和平精英', value: 2 },
+  { text: '原神', value: 3 },
+];
 
-const onSubmit = (values) => {
-  console.log('提交的表单数据:', values);
-  // 模拟登录成功，跳回首页
-  router.push('/home');
-};
+const sortOptions = [
+  { text: '综合排序', value: 'default' },
+  { text: '价格最低', value: 'priceAsc' },
+  { text: '最新上架', value: 'newest' },
+];
 
-const wechatLogin = () => {
-  console.log('触发微信登录逻辑');
-  // 微信授权逻辑后续在这里写
+// --- 列表加载相关数据 ---
+const accountList = ref([]);
+const loading = ref(false);
+const finished = ref(false);
+
+// 模拟后端接口获取数据
+const onLoad = () => {
+  setTimeout(() => {
+    const mockData = [
+      {
+        id: Math.random(),
+        title: '【秒发】V10全英雄全皮肤/绝版武则天/星空梦想典藏',
+        cover: 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg',
+        server: '安卓QQ区',
+        tags: ['包赔', '排位不禁', '极品号'],
+        price: '6.5',
+        isBao: true // 触发包赔小红标
+      },
+      {
+        id: Math.random(),
+        title: '和平精英 玛莎拉蒂/火箭少女101/多粉装退游甩租',
+        cover: 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg',
+        server: '苹果微信',
+        tags: ['可排位', '高分段'],
+        price: '4.0',
+        isBao: false
+      }
+    ];
+
+    accountList.value.push(...mockData);
+    loading.value = false;
+
+    if (accountList.value.length >= 10) {
+      finished.value = true;
+    }
+  }, 1000);
 };
 </script>
 
 <style scoped>
-.login-page {
-  background: #fff;
+/* 1. 统一背景色，并预留底部导航栏的高度防遮挡 */
+.lobby-page {
+  background: #f4f6f9;
   min-height: 100vh;
+  padding-bottom: 50px; 
 }
-.login-container {
-  padding: 20px;
+
+/* 2. 顶部吸顶区域增加白色背景和极淡的阴影 */
+.header-wrap {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
-.logo-box {
-  text-align: center;
-  margin: 30px 0;
+
+/* 3. 去除搜索框默认的奇怪内边距，使其更紧凑 */
+.lobby-search {
+  padding-bottom: 4px;
 }
-.logo-box .logo {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  margin-bottom: 10px;
+
+/* 4. 去除下拉菜单自带的丑陋底边框 */
+:deep(.van-dropdown-menu__bar) {
+  box-shadow: none;
+  height: 40px;
 }
-.logo-box h2 {
-  font-size: 18px;
-  margin: 0;
-  color: #333;
-}
-.form-box {
-  margin-top: 20px;
-}
-.wechat-login {
-  margin-top: 60px;
-  text-align: center;
-}
-.wechat-login p {
-  font-size: 12px;
-  color: #999;
-  margin-top: 8px;
+
+/* 5. 列表容器内边距适配 */
+.list-container {
+  padding: 12px;
 }
 </style>

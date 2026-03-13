@@ -1,174 +1,93 @@
 <template>
   <div class="mine-page">
     <div class="user-header">
-      <van-image 
-        round 
-        width="65" 
-        height="65" 
-        src="https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg" 
-        class="avatar"
-      />
-      <div class="user-info">
-        <div class="nickname" @click="goToLogin">
-          <span>哈基龙新用户</span> 
-          <van-icon name="arrow" size="14" color="#fff" />
+      <div class="header-top">
+        <div class="avatar-wrap">
+          <van-image round width="64" height="64" src="https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg" />
         </div>
-        <div class="user-id">
-          ID: 888888 
-          <van-tag color="rgba(255,255,255,0.3)" text-color="#fff" size="mini" class="copy-btn">复制</van-tag>
+        <div class="user-info" @click="goToLogin">
+          <div class="nickname">点击登录/注册 <van-icon name="arrow" size="14" /></div>
+          <div class="user-id">租号玩，就上哈基龙</div>
         </div>
       </div>
-    </div>
-
-    <div class="assets-card">
-      <div class="asset-item">
-        <div class="value">0.00</div>
-        <div class="label">账户余额(元)</div>
-      </div>
-      <div class="asset-item">
-        <div class="value">0</div>
-        <div class="label">优惠券(张)</div>
-      </div>
-      <div class="asset-item">
-        <div class="value">0</div>
-        <div class="label">我的积分</div>
+      
+      <div class="assets-row">
+        <div class="asset-item">
+          <div class="value">0.00</div>
+          <div class="label">余额(元)</div>
+        </div>
+        <div class="asset-item">
+          <div class="value">0.00</div>
+          <div class="label">冻结(元)</div>
+        </div>
+        <div class="asset-item">
+          <div class="value">0</div>
+          <div class="label">积分</div>
+        </div>
       </div>
     </div>
 
     <div class="section-card">
-      <van-cell title="我的订单" is-link value="全部订单" to="/order" :border="false" />
-      <van-grid :border="false" class="order-grid">
-        <van-grid-item icon="pending-payment" text="待付款" badge="1" />
-        <van-grid-item icon="clock-o" text="租赁中" />
-        <van-grid-item icon="passed" text="已完成" />
-        <van-grid-item icon="after-sale" text="售后/维权" />
+      <van-cell title="我的订单" is-link value="全部订单" to="/order" :border="false" title-class="card-title" />
+      <van-grid :border="false" :column-num="4">
+        <van-grid-item icon="pending-payment" text="待付款" icon-color="#ff9500" />
+        <van-grid-item icon="clock-o" text="租赁中" icon-color="#07c160" />
+        <van-grid-item icon="warn-o" text="维权中" icon-color="#ff3b30" />
+        <van-grid-item icon="passed" text="已完成" icon-color="#8a8a8f" />
       </van-grid>
     </div>
 
     <div class="section-card">
-      <van-cell-group :border="false">
-        <van-cell title="资金流水" icon="gold-coin-o" is-link />
-        <van-cell title="我的收藏" icon="star-o" is-link to="/favorites" />
-        <van-cell title="联系客服" icon="service-o" is-link @click="contactService" />
-        <van-cell title="设置" icon="setting-o" is-link to="/settings" />
-      </van-cell-group>
-    </div>
-
-    <div class="logout-box">
-      <van-button block round type="default" @click="handleLogout">退出登录</van-button>
+      <van-cell title="常用功能" :border="false" title-class="card-title" />
+      <van-grid :border="false" :column-num="4">
+        <van-grid-item icon="balance-list-o" text="资金明细" icon-color="#ffcc00" />
+        <van-grid-item icon="shield-o" text="租客维权" icon-color="#34c759" />
+        <van-grid-item icon="star-o" text="收藏账号" to="/favorites" icon-color="#ff9500" />
+        <van-grid-item icon="question-o" text="帮助中心" icon-color="#5ac8fa" />
+        <van-grid-item icon="service-o" text="联系客服" icon-color="#007aff" />
+        <van-grid-item icon="setting-o" text="设置" to="/settings" icon-color="#5856d6" />
+      </van-grid>
     </div>
   </div>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router';
-import { showConfirmDialog } from 'vant';
-import { showToast } from 'vant';
-
 const router = useRouter();
-
-const contactService = () => {
-  showToast('客服微信：kefu8888 \n工作时间：9:00-22:00');
-};
-
-// 跳转登录页（如果未登录）
-const goToLogin = () => {
-  router.push('/login');
-};
-
-// 退出登录逻辑
-const handleLogout = () => {
-  showConfirmDialog({
-    title: '提示',
-    message: '确定要退出登录吗？',
-  }).then(() => {
-    console.log('用户点击了确认退出');
-    // 清除 Token 逻辑以后写在这里
-  }).catch(() => {
-    // on cancel
-  });
-};
+const goToLogin = () => router.push('/login');
 </script>
 
 <style scoped>
-.mine-page {
-  background: #f7f8fa;
-  min-height: 100%;
-  padding-bottom: 20px;
-}
+.mine-page { background: #f4f6f9; min-height: 100vh; padding-bottom: 20px; }
 
-/* 头部渐变背景 */
+/* 电竞风蓝紫渐变头部，增加发光效果 */
 .user-header {
-  height: 160px;
-  background: linear-gradient(to right, #ff6034, #ee0a24);
-  padding: 40px 20px 0;
-  display: flex;
-  align-items: flex-start;
-}
-.avatar {
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  margin-right: 15px;
-}
-.user-info {
-  color: #fff;
-  margin-top: 8px;
-}
-.nickname {
-  font-size: 18px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 6px;
-}
-.user-id {
-  font-size: 12px;
-  opacity: 0.9;
-}
-.copy-btn {
-  margin-left: 6px;
-  padding: 0 4px;
-}
-
-/* 资产卡片（悬浮在头部上方） */
-.assets-card {
-  background: #fff;
-  border-radius: 12px;
-  margin: -30px 12px 12px; /* 负边距实现向上悬浮效果 */
-  padding: 16px 0;
-  display: flex;
-  justify-content: space-around;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  background: linear-gradient(135deg, #4b126a 0%, #1bcedf 100%);
+  padding: 50px 20px 30px;
+  border-bottom-left-radius: 24px;
+  border-bottom-right-radius: 24px;
+  box-shadow: 0 4px 15px rgba(27, 206, 223, 0.3);
   position: relative;
-  z-index: 2;
 }
-.asset-item {
-  text-align: center;
-}
-.asset-item .value {
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 4px;
-}
-.asset-item .label {
-  font-size: 12px;
-  color: #666;
+/* 添加一个炫酷的背景光晕装饰 */
+.user-header::after {
+  content: ''; position: absolute; top: -20px; right: -20px;
+  width: 150px; height: 150px; background: rgba(255,255,255,0.1);
+  border-radius: 50%; filter: blur(30px); pointer-events: none;
 }
 
-/* 通用卡片区域 */
-.section-card {
-  background: #fff;
-  border-radius: 12px;
-  margin: 0 12px 12px;
-  overflow: hidden;
-}
-.order-grid {
-  padding-bottom: 10px;
-}
+.header-top { display: flex; align-items: center; position: relative; z-index: 2; }
+.avatar-wrap { border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; padding: 2px; }
+.user-info { margin-left: 15px; color: #fff; }
+.nickname { font-size: 20px; font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+.user-id { font-size: 13px; color: rgba(255,255,255,0.8); background: rgba(0,0,0,0.2); padding: 2px 8px; border-radius: 10px; display: inline-block; }
 
-/* 退出按钮 */
-.logout-box {
-  margin: 20px 12px;
-}
+.assets-row { display: flex; justify-content: space-around; margin-top: 30px; position: relative; z-index: 2; }
+.asset-item { text-align: center; color: #fff; }
+.asset-item .value { font-size: 18px; font-weight: bold; font-family: DINAlternate-Bold, sans-serif; margin-bottom: 4px; }
+.asset-item .label { font-size: 12px; color: rgba(255,255,255,0.7); }
+
+.section-card { background: #fff; border-radius: 16px; margin: 15px 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+/* 标题加粗加深 */
+:deep(.card-title) { font-weight: bold; font-size: 16px; color: #2c3e50; }
 </style>
