@@ -57,7 +57,11 @@ import logoImg from '@/assets/logo.png';
 
 const router = useRouter();
 const searchKeyword = ref('');
-const bannerList = ref(['https://fastly.jsdelivr.net/npm/@vant/assets/apple-1.jpeg']);
+const bannerList = ref([
+  'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop', // 炫酷外设
+  'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=800&auto=format&fit=crop', // 游戏手柄
+  'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?q=80&w=800&auto=format&fit=crop'  // 电竞桌面
+]);
 const gameNavs = ref([
   { name: '王者荣耀', icon: 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg' },
   { name: '和平精英', icon: 'https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg' },
