@@ -1,93 +1,179 @@
 <template>
   <div class="mine-page">
-    <div class="user-header">
-      <div class="header-top">
-        <div class="avatar-wrap">
-          <van-image round width="64" height="64" src="https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg" />
+    <div class="user-card-wrap">
+      <div class="user-info">
+        <div class="avatar-box">
+          <img src="https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg" class="avatar" />
         </div>
-        <div class="user-info" @click="goToLogin">
-          <div class="nickname">点击登录/注册 <van-icon name="arrow" size="14" /></div>
-          <div class="user-id">租号玩，就上哈基龙</div>
-        </div>
-      </div>
-      
-      <div class="assets-row">
-        <div class="asset-item">
-          <div class="value">0.00</div>
-          <div class="label">余额(元)</div>
-        </div>
-        <div class="asset-item">
-          <div class="value">0.00</div>
-          <div class="label">冻结(元)</div>
-        </div>
-        <div class="asset-item">
-          <div class="value">0</div>
-          <div class="label">积分</div>
+        <div class="text-info">
+          <h2 class="nickname">电竞高玩_888</h2>
+          <p class="uid">ID: 88866622</p>
         </div>
       </div>
+      <van-icon name="setting-o" class="setting-icon" size="24" @click="goTo('/setting')" />
     </div>
 
-    <div class="section-card">
-      <van-cell title="我的订单" is-link value="全部订单" to="/order" :border="false" title-class="card-title" />
-      <van-grid :border="false" :column-num="4">
-        <van-grid-item icon="pending-payment" text="待付款" icon-color="#ff9500" />
-        <van-grid-item icon="clock-o" text="租赁中" icon-color="#07c160" />
-        <van-grid-item icon="warn-o" text="维权中" icon-color="#ff3b30" />
-        <van-grid-item icon="passed" text="已完成" icon-color="#8a8a8f" />
+    <div class="panel-box order-panel">
+      <div class="panel-header" @click="goTo('/order')">
+        <h3>我的订单</h3>
+        <span class="view-all">全部订单 <van-icon name="arrow" /></span>
+      </div>
+      <van-grid :column-num="4" :border="false" class="esports-grid">
+        <van-grid-item text="待支付" @click="goToOrder(1)">
+          <template #icon><van-icon name="pending-payment" class="neon-icon yellow" /></template>
+        </van-grid-item>
+        <van-grid-item text="租赁中" @click="goToOrder(2)">
+          <template #icon><van-icon name="play-circle-o" class="neon-icon blue" /></template>
+        </van-grid-item>
+        <van-grid-item text="已完成" @click="goToOrder(3)">
+          <template #icon><van-icon name="passed" class="neon-icon green" /></template>
+        </van-grid-item>
+        <van-grid-item text="售后/退款" @click="goTo('/after-sales')">
+          <template #icon><van-icon name="service-o" class="neon-icon purple" /></template>
+        </van-grid-item>
       </van-grid>
     </div>
 
-    <div class="section-card">
-      <van-cell title="常用功能" :border="false" title-class="card-title" />
-      <van-grid :border="false" :column-num="4">
-        <van-grid-item icon="balance-list-o" text="资金明细" icon-color="#ffcc00" />
-        <van-grid-item icon="shield-o" text="租客维权" icon-color="#34c759" />
-        <van-grid-item icon="star-o" text="收藏账号" to="/favorites" icon-color="#ff9500" />
-        <van-grid-item icon="question-o" text="帮助中心" icon-color="#5ac8fa" />
-        <van-grid-item icon="service-o" text="联系客服" icon-color="#007aff" />
-        <van-grid-item icon="setting-o" text="设置" to="/settings" icon-color="#5856d6" />
-      </van-grid>
+    <div class="panel-box menu-panel">
+      <van-cell-group :border="false" class="custom-cell-group">
+        <van-cell title="资金明细" is-link icon="gold-coin-o" class="custom-cell" @click="handleDevelop" />
+        <van-cell title="实名认证" is-link icon="idcard" class="custom-cell" @click="handleDevelop" />
+        <van-cell title="帮助中心" is-link icon="question-o" class="custom-cell" @click="showHelp" />
+        <van-cell title="联系客服" is-link icon="chat-o" class="custom-cell" @click="showContact" />
+      </van-cell-group>
+    </div>
+    
+    <div class="logout-wrap">
+      <button class="logout-btn" @click="handleLogout">退出登录</button>
     </div>
   </div>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router';
+import { showDialog, showConfirmDialog, showToast, showImagePreview } from 'vant';
+
 const router = useRouter();
-const goToLogin = () => router.push('/login');
+
+const goTo = (path) => {
+  router.push(path);
+};
+
+const goToOrder = (status) => {
+  router.push({
+    path: '/order',
+    query: { active: status }
+  });
+};
+
+// 1. 处理开发中模块
+const handleDevelop = () => {
+  showToast('该模块正在全力开发中...');
+};
+
+// 2. 仿PC端帮助中心弹窗
+const showHelp = () => {
+  showDialog({
+    title: '帮助中心',
+    message: 'Q: 租号后如何上号？\nA: 支付成功后在订单详情页获取“上号凭证”，下载对应游戏的官方上号器即可。\n\nQ: 账号无法登录怎么办？\nA: 请点击订单页的“申请售后”，我们会第一时间介入处理。',
+    messageAlign: 'left',
+    theme: 'round-button',
+    confirmButtonColor: '#1900ff'
+  });
+};
+
+// 3. 仿PC端联系客服 (展示二维码)
+const showContact = () => {
+  showConfirmDialog({
+    title: '联系官方客服',
+    message: '为了保障您的权益，请务必认准官方客服。\n工作时间：09:00 - 24:00',
+    confirmButtonText: '查看二维码',
+    cancelButtonText: '以后再说',
+    confirmButtonColor: '#1900ff'
+  }).then(() => {
+    // 模拟展示客服二维码
+    showImagePreview({
+      images: ['https://fastly.jsdelivr.net/npm/@vant/assets/qrcode.png'],
+      closeable: true,
+    });
+  });
+};
+
+// 4. 退出登录交互
+const handleLogout = () => {
+  showConfirmDialog({
+    title: '提示',
+    message: '确定要退出当前账号吗？',
+    confirmButtonColor: '#ff3b30'
+  }).then(() => {
+    // 这里执行清除 token 等逻辑
+    showToast('退出成功');
+    // router.push('/login');
+  }).catch(() => {});
+};
 </script>
 
 <style scoped>
-.mine-page { background: #f4f6f9; min-height: 100vh; padding-bottom: 20px; }
-
-/* 电竞风蓝紫渐变头部，增加发光效果 */
-.user-header {
-  background: linear-gradient(135deg, #4b126a 0%, #1bcedf 100%);
-  padding: 50px 20px 30px;
-  border-bottom-left-radius: 24px;
-  border-bottom-right-radius: 24px;
-  box-shadow: 0 4px 15px rgba(27, 206, 223, 0.3);
-  position: relative;
-}
-/* 添加一个炫酷的背景光晕装饰 */
-.user-header::after {
-  content: ''; position: absolute; top: -20px; right: -20px;
-  width: 150px; height: 150px; background: rgba(255,255,255,0.1);
-  border-radius: 50%; filter: blur(30px); pointer-events: none;
+/* 保持你原本的所有 CSS 不动 */
+.mine-page {
+  background: linear-gradient(to bottom, #1900ff 0%, #ffffff 90%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  padding: 20px 15px 70px 15px;
+  color: #fff;
 }
 
-.header-top { display: flex; align-items: center; position: relative; z-index: 2; }
-.avatar-wrap { border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; padding: 2px; }
-.user-info { margin-left: 15px; color: #fff; }
-.nickname { font-size: 20px; font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
-.user-id { font-size: 13px; color: rgba(255,255,255,0.8); background: rgba(0,0,0,0.2); padding: 2px 8px; border-radius: 10px; display: inline-block; }
+.panel-box {
+  background: #171c26;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.05);
+}
 
-.assets-row { display: flex; justify-content: space-around; margin-top: 30px; position: relative; z-index: 2; }
-.asset-item { text-align: center; color: #fff; }
-.asset-item .value { font-size: 18px; font-weight: bold; font-family: DINAlternate-Bold, sans-serif; margin-bottom: 4px; }
-.asset-item .label { font-size: 12px; color: rgba(255,255,255,0.7); }
+.user-card-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 10px;
+}
+.user-info { display: flex; align-items: center; gap: 15px; }
+.avatar-box {
+  width: 60px; height: 60px; border-radius: 50%; padding: 3px;
+  background: linear-gradient(135deg, #00e5ff, #6f42c1);
+}
+.avatar { width: 100%; height: 100%; border-radius: 50%; border: 2px solid #171c26; object-fit: cover; }
+.nickname { font-size: 18px; margin: 0 0 5px 0; font-weight: bold; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
+.uid { font-size: 12px; color: rgba(255,255,255,0.6); margin: 0; }
+.setting-icon { color: rgba(255,255,255,0.8); }
 
-.section-card { background: #fff; border-radius: 16px; margin: 15px 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
-/* 标题加粗加深 */
-:deep(.card-title) { font-weight: bold; font-size: 16px; color: #2c3e50; }
+.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
+.panel-header h3 { margin: 0; font-size: 15px; color: #fff; }
+.view-all { font-size: 12px; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 2px; }
+
+:deep(.esports-grid .van-grid-item__content) { background: transparent; padding: 10px 0; }
+:deep(.van-grid-item__text) { color: rgba(255,255,255,0.7); margin-top: 8px; font-size: 12px; }
+.neon-icon { font-size: 26px; }
+.yellow { color: #ff9500; text-shadow: 0 0 8px rgba(255, 149, 0, 0.6); }
+.blue { color: #00e5ff; text-shadow: 0 0 8px rgba(0, 229, 255, 0.6); }
+.green { color: #07c160; text-shadow: 0 0 8px rgba(7, 193, 96, 0.6); }
+.purple { color: #6f42c1; text-shadow: 0 0 8px rgba(111, 66, 193, 0.6); }
+
+.menu-panel { padding: 5px 0; }
+:deep(.custom-cell-group) { background: transparent; }
+:deep(.custom-cell) { background: transparent; color: rgba(255,255,255,0.9); padding: 15px; align-items: center; }
+:deep(.custom-cell::after) { border-bottom: 1px solid rgba(255,255,255,0.05); left: 15px; right: 15px; }
+:deep(.custom-cell .van-cell__left-icon) { font-size: 20px; margin-right: 10px; color: #00e5ff; }
+:deep(.custom-cell .van-cell__right-icon) { color: rgba(255,255,255,0.3); }
+
+.logout-wrap { margin-top: 30px; text-align: center; }
+.logout-btn {
+  background: rgba(255, 59, 48, 0.1);
+  border: 1px solid rgba(255, 59, 48, 0.5);
+  color: #ff3b30;
+  width: 80%; padding: 12px 0; border-radius: 25px;
+  font-size: 15px; font-weight: bold;
+}
 </style>

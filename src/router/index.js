@@ -44,10 +44,36 @@ const router = createRouter({
     },
 
     // ================= H5 端路由区 =================
-    { path: '/detail', name: 'Detail', component: () => import('../views/detail/Detail.vue') },
-    { path: '/login', name: 'Login', component: () => import('../views/login/Login.vue') },
-    { path: '/favorites', name: 'Favorites', component: () => import('../views/mine/Favorites.vue') },
-    { path: '/settings', name: 'Settings', component: () => import('../views/mine/Settings.vue') },
+    { 
+      path: '/detail', 
+      name: 'Detail', 
+      component: () => import('../views/detail/Detail.vue') 
+    },
+    { 
+      path: '/login', 
+      name: 'Login', 
+      component: () => import('../views/login/Login.vue') 
+    },
+    { 
+      path: '/favorites', 
+      name: 'Favorites', 
+      component: () => import('../views/mine/Favorites.vue') 
+    },
+    { 
+      path: '/setting', 
+      name: 'Setting', 
+      component: () => import('../views/setting/Setting.vue') 
+    },
+    {
+      path: '/after-sales',
+      name: 'AfterSales',
+      component: () => import('../views/order/AfterSales.vue') // 确保路径和文件名正确
+    },
+    {
+      path: '/pay',
+      name: 'Pay',
+      component: () => import('../views/pay/Pay.vue')
+    },  
     {
       path: '/h5-layout',
       name: 'Layout',

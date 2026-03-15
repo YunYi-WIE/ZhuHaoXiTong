@@ -1,34 +1,25 @@
 <template>
-  <div class="account-card" @click="goToDetail">
-    <div class="card-left">
-      <van-image :src="item.cover" width="100" height="100" radius="8" fit="cover" />
-      <span class="server-badge">{{ item.server }}</span>
+  <div class="account-card user-card" @click="goToDetail">
+    <div class="cover-box">
+      <img :src="item.cover" class="cover-img" />
+      <div class="server-tag">{{ item.server }}</div>
+      <div v-if="item.isBao" class="bao-tag">包赔</div>
     </div>
-    
-    <div class="card-right">
-      <div class="title van-multi-ellipsis--l2">
-        <span class="tag-bao" v-if="item.isBao">包赔</span>
-        {{ item.title }}
-      </div>
-      
+    <div class="info-box">
+      <h4 class="title">{{ item.title }}</h4>
       <div class="tags">
-        <van-tag 
+        <span 
           v-for="(tag, index) in item.tags" 
-          :key="index"
-          :color="index % 2 === 0 ? '#f0f7ff' : '#fff5f0'" 
-          :text-color="index % 2 === 0 ? '#3a7afe' : '#ff6034'"
-          size="mini"
+          :key="tag" 
+          class="tag"
+          :class="'tag-text-color-' + (index % 4)"
         >
           {{ tag }}
-        </van-tag>
+        </span>
       </div>
-      
-      <div class="price-box">
-        <div class="price-info">
-          <span class="price">￥<b>{{ item.price }}</b><span class="unit">/小时</span></span>
-          <span class="deposit">免押金</span>
-        </div>
-        <button class="rent-btn" @click.stop="goToDetail">租</button>
+      <div class="price-row">
+        <span class="price">￥<b>{{ item.price }}</b> /小时</span>
+        <button class="rent-btn">立即租</button>
       </div>
     </div>
   </div>
@@ -36,72 +27,121 @@
 
 <script setup>
 import { useRouter } from 'vue-router';
-const props = defineProps({ item: { type: Object, required: true } });
+
+const props = defineProps({
+  item: {
+    type: Object,
+    required: true
+  }
+});
+
 const router = useRouter();
-const goToDetail = () => router.push('/detail');
+const goToDetail = () => {
+  router.push('/detail'); // 点击卡片跳到详情页
+};
 </script>
 
 <style scoped>
-.account-card {
-  display: flex; background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); /* 加深一点阴影使卡片更立体 */
+/* 🚀 核心：白底黑字卡片主体 */
+.account-card.user-card {
+  display: flex;
+  background: #ffffff; /* 核心：白底 */
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
-.card-left {
-  position: relative;
+
+.account-card.user-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* 左侧图片区 */
+.cover-box {
   width: 100px;
   height: 100px;
-  margin-right: 12px;
-  flex-shrink: 0;
   border-radius: 8px;
-  overflow: hidden; /* 核心：超出部分直接裁剪，绝对不会溢出到右边 */
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
 }
-:deep(.van-image) {
-  width: 100% !important;
-  height: 100% !important;
-  display: block;
-}
-.server-badge {
+.cover-img { width: 100%; height: 100%; object-fit: cover; }
+
+/* 区服标签 */
+.server-tag {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  bottom: 0; left: 0; right: 0;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+  padding: 3px 0;
+  backdrop-filter: blur(2px);
+}
+
+/* 渐变包赔标 */
+.bao-tag {
+  position: absolute;
+  top: 0; left: 0;
+  background: linear-gradient(135deg, #ff3b30, #ff8000);
   color: #fff;
   font-size: 10px;
-  text-align: center;
-  padding: 15px 0 4px; /* 加大一点 padding 让渐变过渡更自然 */
-  z-index: 1;
-  white-space: nowrap; /* 核心：强制一行显示 */
-  overflow: hidden;
-  text-overflow: ellipsis; /* 核心：太长就显示省略号 */
+  padding: 2px 6px;
+  border-bottom-right-radius: 8px;
+  font-weight: bold;
 }
-.card-right {
+
+/* 右侧信息区 */
+.info-box {
+  margin-left: 12px;
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-width: 0;
-  padding: 2px 0; /* 上下稍微留出一点间隙 */
 }
-.title { font-size: 14px; font-weight: bold; color: #2c3e50; line-height: 20px; }
-.tag-bao {
-  background: linear-gradient(135deg, #ff6034, #ee0a24); /* 包赔标签渐变 */
-  color: #fff; font-size: 10px; padding: 1px 4px; border-radius: 4px; margin-right: 4px; vertical-align: middle;
+
+/* 核心：卡片标题白底黑字 */
+.title {
+  margin: 0;
+  font-size: 14px;
+  color: #000; /* 核心：黑字 */
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
-.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
-.price-box { display: flex; justify-content: space-between; align-items: center; }
-.price-info { display: flex; align-items: baseline; gap: 6px; }
+
+/* 🚀 核心：标签彩色字体 */
+.tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+/* 根据索引循环使用不同的彩色字体 */
+.tag-text-color-0 { color: #07c160; background: rgba(7, 193, 96, 0.1); }
+.tag-text-color-1 { color: #ff8000; background: rgba(255, 128, 0, 0.1); }
+.tag-text-color-2 { color: #1677ff; background: rgba(22, 119, 255, 0.1); }
+.tag-text-color-3 { color: #ff3b30; background: rgba(255, 59, 48, 0.1); }
+
+/* 底部价格与按钮 */
+.price-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
 .price { color: #ff3b30; font-size: 12px; }
 .price b { font-size: 18px; font-family: DINAlternate-Bold, sans-serif; }
-.unit { font-size: 10px; color: #999; }
-.deposit {
-  font-size: 10px; color: #00c77b; background: #e6f9f1; padding: 2px 5px; border-radius: 4px;
-}
-/* 炫彩租号按钮 */
+
+/* 按钮镂空设计 */
 .rent-btn {
-  width: 44px; height: 26px; border: none; border-radius: 13px; color: #fff; font-size: 12px; font-weight: bold;
-  background: linear-gradient(135deg, #ff7a59, #ff3b30);
-  box-shadow: 0 2px 6px rgba(255, 59, 48, 0.3);
+  background: transparent;
+  border: 1px solid #ff3b30;
+  color: #ff3b30;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: bold;
 }
-.rent-btn:active { transform: scale(0.95); }
+.rent-btn:active { background: #ff3b30; color: #fff; }
 </style>

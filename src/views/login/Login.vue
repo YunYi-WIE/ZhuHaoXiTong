@@ -1,127 +1,148 @@
 <template>
-  <div class="lobby-page">
-    <van-sticky>
-      <div class="header-wrap">
-        <van-search 
-          v-model="searchKeyword" 
-          placeholder="搜索您想要的极品账号" 
-          shape="round" 
-          background="transparent" 
-          class="lobby-search"
-        />
-        
-        <van-dropdown-menu active-color="#ff3b30" class="custom-dropdown">
-          <van-dropdown-item v-model="gameFilter" :options="gameOptions" />
-          <van-dropdown-item v-model="sortFilter" :options="sortOptions" />
-        </van-dropdown-menu>
-      </div>
-    </van-sticky>
+  <div class="login-page">
+    <van-nav-bar title="欢迎登录" left-arrow @click-left="router.back()" />
 
-    <div class="list-container">
-      <van-list
-        v-model:loading="loading"
-        :finished="finished"
-        finished-text="~ 到底啦 ~"
-        @load="onLoad"
-      >
-        <AccountCard 
-          v-for="item in accountList" 
-          :key="item.id" 
-          :item="item" 
-        />
-      </van-list>
+    <div class="login-container">
+      <div class="brand-box">
+        <img src="@/assets/logo.png" class="login-logo" />
+        <h2 class="brand-name">哈小龙小店</h2>
+      </div>
+
+      <van-tabs v-model:active="activeTab" color="#ff3b30" animated>
+        <van-tab title="手机号登录" name="mobile">
+          <van-form @submit="handleLogin" class="custom-form">
+            <van-cell-group inset>
+              <van-field v-model="loginForm.phone" label="手机号" placeholder="请输入手机号" type="tel" />
+              <van-field v-model="loginForm.code" label="验证码" placeholder="请输入验证码">
+                <template #button>
+                  <van-button size="small" type="primary" plain round color="#ff3b30">获取验证码</van-button>
+                </template>
+              </van-field>
+            </van-cell-group>
+            <div class="submit-wrap">
+              <van-button round block type="primary" native-type="submit" color="#ff3b30">立即登录</van-button>
+            </div>
+          </van-form>
+        </van-tab>
+
+        <van-tab title="账号密码" name="password">
+          <van-form @submit="handleLogin" class="custom-form">
+            <van-cell-group inset>
+              <van-field v-model="loginForm.username" label="账号" placeholder="用户名/手机号/邮箱" />
+              <van-field v-model="loginForm.password" label="密码" type="password" placeholder="请输入密码" />
+            </van-cell-group>
+            <div class="submit-wrap">
+              <van-button round block type="primary" native-type="submit" color="#ff3b30">进入小店</van-button>
+            </div>
+          </van-form>
+        </van-tab>
+      </van-tabs>
+
+      <div class="third-party-login">
+        <van-divider>其他登录方式</van-divider>
+        <div class="wechat-icon-box" @click="handleWechatLogin">
+          <van-icon name="wechat" color="#07c160" size="40" />
+          <p>微信一键登录</p>
+        </div>
+      </div>
+
+      <div class="protocol-box">
+        <van-checkbox v-model="checked" icon-size="14px" checked-color="#ff3b30">
+          登录即代表同意 <span class="link">《用户服务协议》</span> 和 <span class="link">《隐私政策》</span>
+        </van-checkbox>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import AccountCard from '@/components/AccountCard.vue'; 
+import { ref, reactive } from 'vue';
+import { useRouter } from 'vue-router';
+import { showSuccessToast, showFailToast, showLoadingToast } from 'vant';
 
-// --- 筛选条件相关数据 ---
-const searchKeyword = ref('');
-const gameFilter = ref(0);
-const sortFilter = ref('default');
+const router = useRouter();
+const activeTab = ref('mobile'); // 默认选中手机号登录
+const checked = ref(false); // 协议勾选
 
-const gameOptions = [
-  { text: '全部游戏', value: 0 },
-  { text: '王者荣耀', value: 1 },
-  { text: '和平精英', value: 2 },
-  { text: '原神', value: 3 },
-];
+// 登录表单数据
+const loginForm = reactive({
+  phone: '',
+  code: '',
+  username: '',
+  password: ''
+});
 
-const sortOptions = [
-  { text: '综合排序', value: 'default' },
-  { text: '价格最低', value: 'priceAsc' },
-  { text: '最新上架', value: 'newest' },
-];
+// 处理登录逻辑 (手机号 & 账号密码通用)
+const handleLogin = () => {
+  if (!checked.value) {
+    showFailToast('请先阅读并勾选协议');
+    return;
+  }
 
-// --- 列表加载相关数据 ---
-const accountList = ref([]);
-const loading = ref(false);
-const finished = ref(false);
+  showLoadingToast({ message: '登录中...', forbidClick: true });
 
-// 模拟后端接口获取数据
-const onLoad = () => {
+  // 模拟接口请求
   setTimeout(() => {
-    const mockData = [
-      {
-        id: Math.random(),
-        title: '【秒发】V10全英雄全皮肤/绝版武则天/星空梦想典藏',
-        cover: 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg',
-        server: '安卓QQ区',
-        tags: ['包赔', '排位不禁', '极品号'],
-        price: '6.5',
-        isBao: true // 触发包赔小红标
-      },
-      {
-        id: Math.random(),
-        title: '和平精英 玛莎拉蒂/火箭少女101/多粉装退游甩租',
-        cover: 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg',
-        server: '苹果微信',
-        tags: ['可排位', '高分段'],
-        price: '4.0',
-        isBao: false
-      }
-    ];
-
-    accountList.value.push(...mockData);
-    loading.value = false;
-
-    if (accountList.value.length >= 10) {
-      finished.value = true;
-    }
+    showSuccessToast('欢迎回来！');
+    // 成功后跳转到大厅
+    router.push('/lobby');
   }, 1000);
+};
+
+// 处理微信登录
+const handleWechatLogin = () => {
+  if (!checked.value) {
+    showFailToast('请先勾选协议');
+    return;
+  }
+  showLoadingToast('正在拉取微信授权...');
+  // 模拟成功
+  setTimeout(() => {
+    router.push('/lobby');
+  }, 1500);
 };
 </script>
 
 <style scoped>
-/* 1. 统一背景色，并预留底部导航栏的高度防遮挡 */
-.lobby-page {
-  background: #f4f6f9;
-  min-height: 100vh;
-  padding-bottom: 50px; 
+/* 🚀 1. 把整个页面变成垂直方向的弹性盒子 */
+.login-page { 
+  background: #fff; 
+  min-height: 100vh; 
+  display: flex;
+  flex-direction: column; /* 垂直排列 */
+}
+/* 🚀 2. 让中间的容器撑满剩余空间 */
+.login-container { 
+  flex: 1; /* 自动撑开，把底部的协议往下挤 */
+  padding: 30px 10px; 
+  display: flex;
+  flex-direction: column;
+}
+.brand-box { text-align: center; margin-bottom: 30px; }
+.login-logo { width: 70px; height: 70px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+.brand-name { margin-top: 10px; font-size: 18px; font-weight: bold; color: #333; }
+
+.custom-form { margin-top: 15px; }
+.submit-wrap { margin: 30px 16px; }
+
+.third-party-login { margin-top: 40px; text-align: center; }
+.wechat-icon-box { display: inline-block; margin-top: 10px; cursor: pointer; }
+.wechat-icon-box p { font-size: 12px; color: #999; margin-top: 5px; }
+
+/* 🚀 3. 核心：利用 margin-top: auto 自动顶到最下面 */
+.protocol-box {
+  margin-top: auto; /* 神奇的一笔：不管上面内容多少，自动把自己推到容器最底部 */
+  padding-bottom: calc(30px + env(safe-area-inset-bottom)); /* 预留底部安全距离 */
+  display: flex;
+  justify-content: center;
+  font-size: 12px;
 }
 
-/* 2. 顶部吸顶区域增加白色背景和极淡的阴影 */
-.header-wrap {
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-}
+/* 协议里的特殊文字颜色 */
+.link { color: #ff3b30; }
 
-/* 3. 去除搜索框默认的奇怪内边距，使其更紧凑 */
-.lobby-search {
-  padding-bottom: 4px;
-}
-
-/* 4. 去除下拉菜单自带的丑陋底边框 */
-:deep(.van-dropdown-menu__bar) {
-  box-shadow: none;
-  height: 40px;
-}
-
-/* 5. 列表容器内边距适配 */
-.list-container {
-  padding: 12px;
+/* 防止屏幕太小（比如旧款小屏手机）时，上面的输入框被底部的协议挡住，给主容器加点底边距 */
+.login-container { 
+  padding: 30px 10px 80px 10px; 
 }
 </style>

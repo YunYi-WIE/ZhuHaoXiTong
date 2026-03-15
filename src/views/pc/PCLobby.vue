@@ -95,6 +95,27 @@
         <el-pagination background layout="prev, pager, next, jumper" :total="100" />
       </div>
     </div>
+    <el-dialog v-model="showHelp" title="帮助中心与专属客服" width="400px" center>
+      <div class="help-dialog-content">
+        <img src="https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg" class="qrcode-img" />
+        <h3 style="margin: 10px 0; color: #333;">扫码添加专属客服</h3>
+        <p class="wechat-id">微信号：<b style="color: #ff3b30;">haxiaolong_888</b></p>
+        <p class="work-time">工作时间：09:00 - 24:00 (全年无休)</p>
+        <el-divider border-style="dashed" />
+        <div class="faq-list">
+          <p>常见问题：</p>
+          <ul>
+            <li>• 租号需要交押金吗？</li>
+            <li>• 密码错误怎么处理？</li>
+            <li>• 租期没到不想玩了能退款吗？</li>
+          </ul>
+          <p style="font-size: 12px; color: #999; margin-top: 5px;">* 更多问题请直接咨询人工客服</p>
+        </div>
+      </div>
+      <template #footer>
+        <el-button type="danger" @click="showHelp = false" style="width: 100%;" round>我知道了</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -102,6 +123,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
+const showHelp = ref(false);
 const router = useRouter();
 const search = ref('');
 const sortBy = ref('综合排序');
@@ -118,6 +140,7 @@ const serverOptions = ['不限', '安卓 QQ', '安卓 微信', '苹果 QQ', '苹
 const handleMenuSelect = (index) => {
   if (index === '1') router.push('/pc-home');
   if (index === '2') router.push('/pc-lobby');
+  if (index === '3') showHelp.value = true; // 👈 关键：点第3个菜单时弹出窗口
 };
 
 // 通用跳转函数
@@ -164,6 +187,15 @@ const goTo = (path) => {
 .price-box { display: flex; justify-content: space-between; align-items: center; }
 .price { color: #ff3b30; font-size: 12px; }
 .price b { font-size: 20px; }
+
+/* 客服弹窗样式 */
+.help-dialog-content { text-align: center; }
+.qrcode-img { width: 160px; height: 160px; border-radius: 8px; border: 1px solid #eee; padding: 5px; }
+.wechat-id { font-size: 15px; color: #666; margin: 5px 0; }
+.work-time { font-size: 13px; color: #999; margin-bottom: 15px; }
+.faq-list { text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 14px; color: #555; }
+.faq-list ul { padding-left: 15px; margin: 10px 0; list-style: none; }
+.faq-list li { margin-bottom: 8px; }
 
 /* 分页器 */
 .pagination-box { display: flex; justify-content: center; margin-top: 30px; }
