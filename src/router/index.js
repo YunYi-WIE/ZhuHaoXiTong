@@ -1,51 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-// 设备检测函数
-const isMobile = () => {
-  return navigator.userAgent.match(/(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i)
-}
-
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      redirect: '/home' // 默认值，实际会被下方的守卫拦截
+      redirect: '/home' // 默认重定向到首页
     },
     
-    // ================= PC 端路由区 =================
-    {
-      path: '/pc-home',
-      name: 'PCHome',
-      component: () => import('../views/pc/PCHome.vue')
-    },
-    {
-      path: '/pc-lobby',
-      name: 'PCLobby',
-      component: () => import('../views/pc/PCLobby.vue')
-    },
-    //新增详情页路由
-    {
-      path: '/pc-detail',
-      name: 'PCDetail',
-      component: () => import('../views/pc/PCDetail.vue')
-    },
-    //新增登录页路由
-    {
-      path: '/pc-login',
-      name: 'PCLogin',
-      component: () => import('../views/pc/PCLogin.vue')
-    },
-    // PC用户中心综合路由
-    {
-      path: '/pc-user',
-      name: 'PCUserCenter',
-      component: () => import('../views/pc/PCUserCenter.vue')
-    },
-
-    // ================= H5 端路由区 =================
+    // ================= 全端响应式路由区 =================
     { 
-      path: '/detail', 
+      path: '/detail/:id?', // 加入参数占位，方便传参
       name: 'Detail', 
       component: () => import('../views/detail/Detail.vue') 
     },
@@ -67,15 +32,17 @@ const router = createRouter({
     {
       path: '/after-sales',
       name: 'AfterSales',
-      component: () => import('../views/order/AfterSales.vue') // 确保路径和文件名正确
+      component: () => import('../views/order/AfterSales.vue')
     },
     {
       path: '/pay',
       name: 'Pay',
       component: () => import('../views/pay/Pay.vue')
     },  
+    
+    // ================= 带有底部导航栏/顶栏的布局页 =================
     {
-      path: '/h5-layout',
+      path: '/layout',
       name: 'Layout',
       component: () => import('../views/layout/Layout.vue'),
       children: [
@@ -88,22 +55,5 @@ const router = createRouter({
   ]
 })
 
-// 🛡️ 重点：全局路由守卫（类似安检机，每次页面跳转/刷新都要经过这里）
-router.beforeEach((to, from, next) => {
-  const isMob = isMobile();
-
-  // 1. 如果是【手机端】，但试图访问【PC端页面】(路径包含 /pc-)
-  if (isMob && to.path.includes('/pc-')) {
-    next('/home'); // 强制踢回手机版首页
-  }
-  // 2. 如果是【电脑端】，但试图访问【手机端页面】(路径不包含 /pc-)
-  else if (!isMob && !to.path.includes('/pc-')) {
-    next('/pc-home'); // 强制踢回电脑版首页
-  }
-  // 3. 设备和页面匹配，正常放行
-  else {
-    next(); 
-  }
-})
-
+// 不再需要任何路由拦截，响应式完全交给 CSS 媒体查询处理
 export default router

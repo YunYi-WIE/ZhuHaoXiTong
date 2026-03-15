@@ -9,7 +9,7 @@
       </router-view>
     </div>
 
-    <van-tabbar v-model="active" route active-color="#ee0a24" inactive-color="#000">
+    <van-tabbar v-model="active" route active-color="#1900ff" inactive-color="#000" class="mobile-tabbar" placeholder>
       <van-tabbar-item replace to="/home" icon="home-o">首页</van-tabbar-item>
       <van-tabbar-item replace to="/lobby" icon="apps-o">租号大厅</van-tabbar-item>
       <van-tabbar-item replace to="/order" icon="orders-o">订单</van-tabbar-item>
@@ -25,16 +25,26 @@ const active = ref(0);
 
 <style scoped>
 .app-container {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f7f8fa; /* 灰白底色，突显卡片 */
 }
+
+/* 移动端默认状态：给底部导航栏留出空间 */
 .main-content {
   flex: 1;
-  overflow-y: auto;
-  padding-bottom: 50px; /* 留出底部导航栏的高度 */
-  -webkit-overflow-scrolling: touch;
+}
+
+/* 🚀 核心媒体查询：当屏幕 >= 768px (PC/平板) 时触发 */
+@media (min-width: 768px) {
+  /* 1. 强行隐藏底部导航栏 */
+  .mobile-tabbar {
+    display: none !important;
+  }
+  /* 2. PC端不需要给底部留白了，取消 padding-bottom */
+  .main-content {
+    padding-bottom: 0 !important; 
+  }
 }
 </style>
