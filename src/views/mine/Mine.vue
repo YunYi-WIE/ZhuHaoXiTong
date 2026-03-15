@@ -1,179 +1,220 @@
 <template>
   <div class="mine-page">
-    <div class="user-card-wrap">
-      <div class="user-info">
-        <div class="avatar-box">
-          <img src="https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg" class="avatar" />
-        </div>
-        <div class="text-info">
-          <h2 class="nickname">电竞高玩_888</h2>
-          <p class="uid">ID: 88866622</p>
-        </div>
-      </div>
-      <van-icon name="setting-o" class="setting-icon" size="24" @click="goTo('/setting')" />
-    </div>
-
-    <div class="panel-box order-panel">
-      <div class="panel-header" @click="goTo('/order')">
-        <h3>我的订单</h3>
-        <span class="view-all">全部订单 <van-icon name="arrow" /></span>
-      </div>
-      <van-grid :column-num="4" :border="false" class="esports-grid">
-        <van-grid-item text="待支付" @click="goToOrder(1)">
-          <template #icon><van-icon name="pending-payment" class="neon-icon yellow" /></template>
-        </van-grid-item>
-        <van-grid-item text="租赁中" @click="goToOrder(2)">
-          <template #icon><van-icon name="play-circle-o" class="neon-icon blue" /></template>
-        </van-grid-item>
-        <van-grid-item text="已完成" @click="goToOrder(3)">
-          <template #icon><van-icon name="passed" class="neon-icon green" /></template>
-        </van-grid-item>
-        <van-grid-item text="售后/退款" @click="goTo('/after-sales')">
-          <template #icon><van-icon name="service-o" class="neon-icon purple" /></template>
-        </van-grid-item>
-      </van-grid>
-    </div>
-
-    <div class="panel-box menu-panel">
-      <van-cell-group :border="false" class="custom-cell-group">
-        <van-cell title="资金明细" is-link icon="gold-coin-o" class="custom-cell" @click="handleDevelop" />
-        <van-cell title="实名认证" is-link icon="idcard" class="custom-cell" @click="handleDevelop" />
-        <van-cell title="帮助中心" is-link icon="question-o" class="custom-cell" @click="showHelp" />
-        <van-cell title="联系客服" is-link icon="chat-o" class="custom-cell" @click="showContact" />
-      </van-cell-group>
-    </div>
     
-    <div class="logout-wrap">
-      <button class="logout-btn" @click="handleLogout">退出登录</button>
-    </div>
+    <NavBar activeMenu="mine" class="desktop-only" />
+
+    <van-nav-bar 
+      title="个人中心" 
+      class="mobile-nav mobile-only transparent-nav"
+      :border="false"
+      placeholder
+    />
+
+    <main class="main-content">
+      
+      <div class="profile-section">
+        <div class="profile-card dark-glass-card">
+          <div class="user-info">
+            <img src="https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg" class="avatar" />
+            <div class="info-text">
+              <h2 class="username">电竞高玩_888 <span class="vip-tag">SVIP</span></h2>
+              <p class="user-id">ID: 884812345</p>
+            </div>
+          </div>
+          
+          <div class="asset-panel">
+            <div class="asset-item">
+              <div class="num">3</div>
+              <div class="label">优惠券 (张)</div>
+            </div>
+            <div class="asset-item">
+              <div class="num">2560</div>
+              <div class="label">当前积分</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-section">
+        
+        <div class="dashboard-card dark-glass-card">
+          <div class="card-header">
+            <h3 class="white-text">我的订单</h3>
+            <span class="view-all" @click="goToOrder(0)">全部订单 <van-icon name="arrow" /></span>
+          </div>
+          <van-grid :border="false" :column-num="4" class="custom-grid">
+            <van-grid-item icon="pending-payment" text="待付款" @click="goToOrder(1)" />
+            <van-grid-item icon="play-circle-o" text="租赁中" @click="goToOrder(2)" />
+            <van-grid-item icon="passed" text="已完成" @click="goToOrder(3)" />
+            <van-grid-item icon="service-o" text="售后/退款" @click="goTo('/after-sales')" />
+          </van-grid>
+        </div>
+
+        <div class="dashboard-card dark-glass-card">
+          <div class="card-header">
+            <h3 class="white-text">常用服务</h3>
+          </div>
+          <van-cell-group inset class="custom-cell-group">
+            <van-cell title="实名认证" icon="idcard" is-link @click="showRealNameAuth" />
+            <van-cell title="联系客服" icon="chat-o" is-link @click="showHelp = true" />
+            <van-cell title="系统设置" icon="setting-o" is-link @click="goTo('/setting')" />
+          </van-cell-group>
+        </div>
+
+        <div class="logout-wrap">
+          <van-button block round class="logout-btn" @click="handleLogout">退出登录</van-button>
+        </div>
+
+      </div>
+    </main>
+
+    <van-dialog v-model:show="showHelp" title="专属客服" show-cancel-button>
+      <div style="text-align: center; padding: 20px;">
+        <img src="https://fastly.jsdelivr.net/npm/@vant/assets/qrcode.png" style="width: 150px;" />
+        <p style="margin-top: 10px; color: #666;">扫码添加官方客服</p>
+      </div>
+    </van-dialog>
+
+    <van-dialog v-model:show="realNameVisible" title="实名认证" show-cancel-button @confirm="handleAuthConfirm">
+      <div class="auth-form">
+        <van-field v-model="authForm.name" label="姓名" placeholder="请输入真实姓名" />
+        <van-field v-model="authForm.idCard" label="身份证" placeholder="请输入身份证号" />
+        <p class="auth-tips">根据国家相关规定，租号需进行实名认证</p>
+      </div>
+    </van-dialog>
+
   </div>
 </template>
 
 <script setup>
+import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import { showDialog, showConfirmDialog, showToast, showImagePreview } from 'vant';
+import { showConfirmDialog, showToast } from 'vant';
+import NavBar from '@/components/NavBar.vue';
 
 const router = useRouter();
+const showHelp = ref(false);
+const realNameVisible = ref(false); // 弹窗状态变量
 
-const goTo = (path) => {
-  router.push(path);
-};
+const authForm = reactive({
+  name: '',
+  idCard: ''
+});
 
+const goTo = (path) => router.push(path);
+
+// 跳转订单
 const goToOrder = (status) => {
-  router.push({
-    path: '/order',
-    query: { active: status }
-  });
+  router.push({ path: '/order', query: { active: status } });
 };
 
-// 1. 处理开发中模块
-const handleDevelop = () => {
-  showToast('该模块正在全力开发中...');
+// 🚀 修复后的实名认证唤起函数
+const showRealNameAuth = () => {
+  realNameVisible.value = true; // 使用 .value 才能生效
 };
 
-// 2. 仿PC端帮助中心弹窗
-const showHelp = () => {
-  showDialog({
-    title: '帮助中心',
-    message: 'Q: 租号后如何上号？\nA: 支付成功后在订单详情页获取“上号凭证”，下载对应游戏的官方上号器即可。\n\nQ: 账号无法登录怎么办？\nA: 请点击订单页的“申请售后”，我们会第一时间介入处理。',
-    messageAlign: 'left',
-    theme: 'round-button',
-    confirmButtonColor: '#1900ff'
-  });
+// 提交认证逻辑
+const handleAuthConfirm = () => {
+  if (!authForm.name || !authForm.idCard) {
+    showToast('请填写完整信息');
+    return;
+  }
+  showToast('认证申请已提交');
+  // 提交后重置表单
+  authForm.name = '';
+  authForm.idCard = '';
 };
 
-// 3. 仿PC端联系客服 (展示二维码)
-const showContact = () => {
-  showConfirmDialog({
-    title: '联系官方客服',
-    message: '为了保障您的权益，请务必认准官方客服。\n工作时间：09:00 - 24:00',
-    confirmButtonText: '查看二维码',
-    cancelButtonText: '以后再说',
-    confirmButtonColor: '#1900ff'
-  }).then(() => {
-    // 模拟展示客服二维码
-    showImagePreview({
-      images: ['https://fastly.jsdelivr.net/npm/@vant/assets/qrcode.png'],
-      closeable: true,
-    });
-  });
-};
-
-// 4. 退出登录交互
+// 退出登录
 const handleLogout = () => {
   showConfirmDialog({
-    title: '提示',
-    message: '确定要退出当前账号吗？',
+    title: '温馨提示',
+    message: '确认要退出当前账号吗？',
     confirmButtonColor: '#ff3b30'
   }).then(() => {
-    // 这里执行清除 token 等逻辑
-    showToast('退出成功');
-    // router.push('/login');
+    showToast('已退出登录');
+    router.replace('/login');
   }).catch(() => {});
 };
 </script>
 
 <style scoped>
-/* 保持你原本的所有 CSS 不动 */
+/* =========================================
+   全局基础设定
+   ========================================= */
 .mine-page {
   background: linear-gradient(to bottom, #1900ff 0%, #ffffff 90%);
   background-attachment: fixed;
   min-height: 100vh;
-  padding: 20px 15px 70px 15px;
-  color: #fff;
 }
 
-.panel-box {
-  background: #171c26;
-  border-radius: 12px;
-  padding: 15px;
-  margin-bottom: 15px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-  border: 1px solid rgba(255,255,255,0.05);
+/* 手机端透明返回栏 */
+:deep(.transparent-nav) { background: transparent !important; }
+:deep(.transparent-nav .van-nav-bar__title) { color: #fff !important; font-weight: bold; font-size: 17px; text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
+:deep(.van-hairline--bottom:after) { border-bottom-width: 0 !important; }
+
+/* 🚀 优化：黑色磨砂玻璃材质卡片 */
+.dark-glass-card {
+  background: rgba(23, 28, 38, 0.9) !important;
+  backdrop-filter: blur(15px);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.user-card-wrap {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding: 10px;
+.white-text { color: #ffffff !important; }
+
+/* =========================================
+   用户信息卡片
+   ========================================= */
+.profile-card { padding: 25px 20px; }
+.user-info { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+.avatar { width: 70px; height: 70px; border-radius: 50%; border: 2px solid #00e5ff; object-fit: cover; }
+.username { font-size: 18px; font-weight: bold; color: #fff !important; margin: 0 0 8px 0; display: flex; align-items: center; gap: 8px; }
+.vip-tag { background: linear-gradient(90deg, #ff3b30, #ff8000); color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 12px; font-weight: normal; }
+.user-id { font-size: 12px; color: rgba(255,255,255,0.5); margin: 0; }
+
+.asset-panel { display: flex; justify-content: space-around; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px 0; }
+.asset-item .num { font-size: 18px; font-weight: bold; color: #00e5ff; font-family: 'DIN Alternate', sans-serif; margin-bottom: 5px; }
+.asset-item .label { font-size: 12px; color: rgba(255,255,255,0.6); }
+
+/* =========================================
+   功能看板
+   ========================================= */
+.dashboard-card { margin-top: 15px; overflow: hidden; }
+.card-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.view-all { font-size: 13px; color: rgba(255,255,255,0.4); cursor: pointer; }
+
+:deep(.custom-grid .van-grid-item__content) { background: transparent; padding: 20px 0; }
+:deep(.custom-grid .van-grid-item__icon) { font-size: 28px; color: #00e5ff; }
+:deep(.custom-grid .van-grid-item__text) { color: rgba(255,255,255,0.7); font-size: 13px; }
+
+:deep(.custom-cell-group) { margin: 0; background: transparent; }
+:deep(.custom-cell-group .van-cell) { background: transparent; padding: 16px 20px; color: rgba(255,255,255,0.9); }
+:deep(.van-cell__left-icon) { color: #00e5ff; font-size: 20px; }
+:deep(.van-cell__title) { color: #fff; }
+
+.logout-wrap { margin: 30px 15px; }
+.logout-btn { background: rgba(255,255,255,0.1); color: #ff3b30; border: 1px solid rgba(255,59,48,0.3); font-weight: bold; }
+
+/* 实名认证弹窗表单 */
+.auth-form { padding: 20px 10px; }
+.auth-tips { font-size: 11px; color: #999; margin: 15px 15px 0 15px; line-height: 1.4; }
+
+/* --- 📱 手机端适配 --- */
+@media (max-width: 767px) {
+  .main-content { padding: 10px 15px 70px 15px; }
 }
-.user-info { display: flex; align-items: center; gap: 15px; }
-.avatar-box {
-  width: 60px; height: 60px; border-radius: 50%; padding: 3px;
-  background: linear-gradient(135deg, #00e5ff, #6f42c1);
-}
-.avatar { width: 100%; height: 100%; border-radius: 50%; border: 2px solid #171c26; object-fit: cover; }
-.nickname { font-size: 18px; margin: 0 0 5px 0; font-weight: bold; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
-.uid { font-size: 12px; color: rgba(255,255,255,0.6); margin: 0; }
-.setting-icon { color: rgba(255,255,255,0.8); }
 
-.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
-.panel-header h3 { margin: 0; font-size: 15px; color: #fff; }
-.view-all { font-size: 12px; color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 2px; }
-
-:deep(.esports-grid .van-grid-item__content) { background: transparent; padding: 10px 0; }
-:deep(.van-grid-item__text) { color: rgba(255,255,255,0.7); margin-top: 8px; font-size: 12px; }
-.neon-icon { font-size: 26px; }
-.yellow { color: #ff9500; text-shadow: 0 0 8px rgba(255, 149, 0, 0.6); }
-.blue { color: #00e5ff; text-shadow: 0 0 8px rgba(0, 229, 255, 0.6); }
-.green { color: #07c160; text-shadow: 0 0 8px rgba(7, 193, 96, 0.6); }
-.purple { color: #6f42c1; text-shadow: 0 0 8px rgba(111, 66, 193, 0.6); }
-
-.menu-panel { padding: 5px 0; }
-:deep(.custom-cell-group) { background: transparent; }
-:deep(.custom-cell) { background: transparent; color: rgba(255,255,255,0.9); padding: 15px; align-items: center; }
-:deep(.custom-cell::after) { border-bottom: 1px solid rgba(255,255,255,0.05); left: 15px; right: 15px; }
-:deep(.custom-cell .van-cell__left-icon) { font-size: 20px; margin-right: 10px; color: #00e5ff; }
-:deep(.custom-cell .van-cell__right-icon) { color: rgba(255,255,255,0.3); }
-
-.logout-wrap { margin-top: 30px; text-align: center; }
-.logout-btn {
-  background: rgba(255, 59, 48, 0.1);
-  border: 1px solid rgba(255, 59, 48, 0.5);
-  color: #ff3b30;
-  width: 80%; padding: 12px 0; border-radius: 25px;
-  font-size: 15px; font-weight: bold;
+/* --- 💻 电脑端适配 --- */
+@media (min-width: 768px) {
+  .main-content {
+    max-width: 1000px; margin: 0 auto;
+    padding: 80px 15px 50px 15px; 
+    display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start;
+  }
+  .profile-card { position: sticky; top: 80px; }
+  .dashboard-card { margin-top: 0; margin-bottom: 20px; }
+  .logout-btn:hover { background: #ff3b30; color: #fff; }
 }
 </style>

@@ -1,34 +1,18 @@
 <template>
   <div class="lobby-page">
     
-    <header class="responsive-header">
-      <div class="header-inner">
-        <div class="logo-box" @click="goTo('/')">
-          <img src="@/assets/logo.png" class="logo-img glow-effect" />
-          <span class="brand-name neon-text">哈小龙小店</span>
-        </div>
-
-        <nav class="desktop-nav desktop-only">
-          <span class="nav-item" @click="goTo('/')">首页</span>
-          <span class="nav-item active" @click="goTo('/lobby')">租号大厅</span>
-        </nav>
-
-        <div class="header-actions">
-          <span class="desktop-only login-text" @click="goTo('/login')">登录/注册</span>
-          <van-icon name="chat-o" size="24" class="cs-icon neon-cs" @click="showHelp = true" />
-        </div>
-      </div>
-    </header>
+    <NavBar activeMenu="lobby" />
 
     <main class="main-content">
       
       <div class="sticky-filter">
+        
         <van-search 
           v-model="searchKeyword" 
           placeholder="搜索您想要的极品账号" 
           shape="round" 
           background="transparent" 
-          class="lobby-search"
+          class="lobby-search mobile-only"
         />
         
         <van-dropdown-menu active-color="#00e5ff" class="custom-dropdown">
@@ -45,36 +29,34 @@
           @load="onLoad"
         >
           <div class="responsive-account-grid">
-            <AccountCard 
-              v-for="item in accountList" 
-              :key="item.id" 
-              :item="item" 
-            />
+            <div class="account-card" v-for="item in accountList" :key="item.id" @click="goToDetail(item.id)">
+              <div class="card-cover">
+                <img :src="item.cover" />
+                <span class="tag">{{ item.tags[0] }}</span>
+              </div>
+              <div class="card-info">
+                <h4 class="title">{{ item.title }}</h4>
+                <div class="price-row">
+                  <span class="price">￥<b>{{ item.price }}</b>/小时</span>
+                </div>
+              </div>
+            </div>
           </div>
         </van-list>
       </div>
     </main>
-
-    <van-dialog v-model:show="showHelp" title="专属客服" show-cancel-button>
-      <div style="text-align: center; padding: 20px;">
-        <img src="https://fastly.jsdelivr.net/npm/@vant/assets/qrcode.png" style="width: 150px;" />
-        <p style="margin-top: 10px; color: #666;">扫码添加官方客服</p>
-      </div>
-    </van-dialog>
-
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import AccountCard from '@/components/AccountCard.vue'; 
+import NavBar from '@/components/NavBar.vue';
 
-const router = useRouter();
 const searchKeyword = ref('');
 const gameFilter = ref(0);
 const sortFilter = ref('default');
-const showHelp = ref(false);
+const router = useRouter();
 
 const gameOptions = [
   { text: '全部游戏', value: 0 },
@@ -93,29 +75,24 @@ const accountList = ref([]);
 const loading = ref(false);
 const finished = ref(false);
 
-const goTo = (path) => {
-  router.push(path);
-};
-
 const onLoad = () => {
   setTimeout(() => {
     const mockData = [
-      { id: Math.random(), title: '【秒发】V10全英雄全皮肤/绝版武则天', cover: 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg', server: '安卓QQ区', tags: ['包赔', '极品号'], price: '5.8', isBao: true },
-      { id: Math.random(), title: '和平精英 玛莎拉蒂/火箭少女101退游甩', cover: 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg', server: '苹果微信', tags: ['可排位'], price: '4.0', isBao: false },
-      { id: Math.random(), title: '【秒发】V10全英雄全皮肤/绝版武则天', cover: 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg', server: '安卓QQ区', tags: ['包赔', '极品号'], price: '5.8', isBao: true },
-      { id: Math.random(), title: '和平精英 玛莎拉蒂/火箭少女101退游甩', cover: 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg', server: '苹果微信', tags: ['可排位'], price: '4.0', isBao: false }
+      { id: Math.random(), title: '【秒发】V10全英雄全皮肤/绝版武则天', cover: 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg', tags: ['包赔'], price: '5.8' },
+      { id: Math.random(), title: '和平精英 玛莎拉蒂/火箭少女101退游甩', cover: 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg', tags: ['特价'], price: '4.0' },
     ];
     accountList.value.push(...mockData);
     loading.value = false;
-    if (accountList.value.length >= 20) finished.value = true;
+    if (accountList.value.length >= 10) finished.value = true;
   }, 1000);
+};
+
+const goToDetail = (id) => {
+  router.push(`/detail/${id}`);
 };
 </script>
 
 <style scoped>
-/* =========================================
-   全局基础与电竞风主题设定
-   ========================================= */
 .lobby-page {
   background: linear-gradient(to bottom, #1900ff 0%, #ffffff 90%);
   background-attachment: fixed;
@@ -123,66 +100,26 @@ const onLoad = () => {
   color: #fff;
 }
 
-/* =========================================
-   响应式顶部导航栏 (同首页)
-   ========================================= */
-.responsive-header {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 60px;
-  background: #171c26;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  z-index: 1000;
-}
-
-.header-inner {
-  max-width: 1200px; 
-  margin: 0 auto;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 15px;
-}
-
-.logo-box { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-.logo-img { width: 32px; height: 32px; border-radius: 6px; }
-.glow-effect { box-shadow: 0 0 10px rgba(111, 66, 193, 0.5); }
-.neon-text { font-size: 18px; font-weight: bold; color: #fff; text-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(255, 59, 48, 0.5); }
-
-.header-actions { display: flex; align-items: center; gap: 20px; }
-.login-text { font-size: 14px; color: #fff; cursor: pointer; transition: color 0.3s; }
-.login-text:hover { color: #00e5ff; }
-.cs-icon { color: #fff; cursor: pointer; }
-.neon-cs:hover { text-shadow: 0 0 8px #07c160; color: #07c160; }
-
-/* =========================================
-   主体内容区
-   ========================================= */
 .main-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 60px 0 20px 0; /* 顶部留出 header 的 60px */
+  padding: 60px 0 15px 0; /* 留出 NavBar 的 60px 空间 */
 }
 
-/* =========================================
-   悬浮的搜索与筛选区
-   ========================================= */
+/* 吸顶筛选区 */
 .sticky-filter {
   position: sticky;
-  top: 60px; /* 🚀 核心魔法：吸顶位置正好在 header 的下方 */
+  top: 60px; /* 吸顶位置在 Header 下方 */
   z-index: 99;
   background: #171c26;
   box-shadow: 0 4px 10px rgba(0,0,0,0.3);
   padding-bottom: 5px;
 }
 
-/* 搜索框透明化 */
+/* 手机端搜索框透明化 */
 .lobby-search { background: transparent !important; padding: 10px 15px 5px 15px; }
 :deep(.lobby-search .van-search__content) { background: rgba(0, 0, 0, 0.25) !important; border: 1px solid rgba(255, 255, 255, 0.15); transition: all 0.3s; }
-:deep(.lobby-search .van-search__content:focus-within) { border-color: #00e5ff; box-shadow: 0 0 8px rgba(0, 229, 255, 0.4); }
 :deep(.lobby-search .van-field__control) { color: #fff; }
-:deep(.lobby-search .van-field__control::placeholder) { color: rgba(255, 255, 255, 0.6); }
 
 /* 下拉菜单暗黑化 */
 :deep(.van-dropdown-menu__bar) { background: transparent; box-shadow: none; height: 40px; }
@@ -194,62 +131,31 @@ const onLoad = () => {
 :deep(.van-dropdown-item__option--active) { color: #00e5ff; background: rgba(0, 229, 255, 0.05); } 
 :deep(.van-dropdown-item__option--active .van-dropdown-item__icon) { color: #00e5ff; }
 
-/* 列表容器 */
 .list-container { padding: 15px; }
 
-/* =========================================
-   ✨ 核心：纯 CSS 响应式媒体查询
-   ========================================= */
+/* 卡片样式复用 */
+.account-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column; }
+.account-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+.card-cover { height: 140px; position: relative; background: #eee; }
+.card-cover img { width: 100%; height: 100%; object-fit: cover; }
+.card-cover .tag { position: absolute; top: 8px; left: 8px; background: #ff3b30; color: #fff; font-size: 10px; padding: 3px 6px; border-radius: 4px; }
+.card-info { padding: 12px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+.title { color: #333; font-size: 14px; font-weight: bold; margin: 0 0 10px 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.price { color: #ff3b30; font-size: 12px; }
+.price b { font-size: 20px; }
 
-/* --- 手机端特有 --- */
+/* 📱 手机端适配 */
 @media (max-width: 767px) {
-  .desktop-only { display: none !important; }
   .mobile-only { display: block; }
-  
-  .responsive-account-grid {
-    display: grid;
-    grid-template-columns: repeat(1, 1fr); /* 手机端单列更清晰 */
-    gap: 15px;
-  }
+  .responsive-account-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: 15px; }
 }
 
-/* --- 平板与 PC 端特有 (>= 768px) --- */
+/* 💻 PC 端适配 */
 @media (min-width: 768px) {
   .mobile-only { display: none !important; }
-  .desktop-only { display: flex !important; }
-  
-  /* PC 顶部导航菜单 */
-  .desktop-nav {
-    display: flex;
-    gap: 30px;
-    margin-left: 40px;
-  }
-  .nav-item {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    position: relative;
-    transition: all 0.3s;
-  }
-  .nav-item:hover { color: #fff; text-shadow: 0 0 8px rgba(0, 229, 255, 0.6); }
-  .nav-item.active { color: #00e5ff; }
-  .nav-item.active::after {
-    content: ''; position: absolute; bottom: -8px; left: 50%;
-    transform: translateX(-50%); width: 20px; height: 3px;
-    background: #00e5ff; border-radius: 2px; box-shadow: 0 0 8px #00e5ff;
-  }
-  
-  /* PC 端筛选区限制圆角，避免贴边 */
-  .sticky-filter {
-    border-radius: 12px;
-    margin: 20px 15px;
-  }
-
-  .responsive-account-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 🚀 因为AccountCard是横向卡片，PC端使用双列排版最优雅 */
-    gap: 20px;
-  }
+  .sticky-filter { border-radius: 12px; margin: 20px 15px; }
+  .responsive-account-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .card-cover { height: 160px; } 
+  .title { font-size: 15px; margin-bottom: 15px; }
 }
 </style>
