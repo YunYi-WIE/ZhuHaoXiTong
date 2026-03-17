@@ -1,50 +1,71 @@
 <template>
-  <div class="app-container">
-    <div class="main-content">
-      <router-view v-slot="{ Component }">
-        <keep-alive>
-          <component :is="Component" v-if="$route.meta.keepAlive" />
-        </keep-alive>
-        <component :is="Component" v-if="!$route.meta.keepAlive" />
-      </router-view>
-    </div>
+  <div class="app-layout">
+    <router-view />
 
-    <van-tabbar v-model="active" route active-color="#1900ff" inactive-color="#000" class="mobile-tabbar" placeholder>
-      <van-tabbar-item replace to="/home" icon="home-o">首页</van-tabbar-item>
-      <van-tabbar-item replace to="/lobby" icon="apps-o">租号大厅</van-tabbar-item>
-      <van-tabbar-item replace to="/order" icon="orders-o">订单</van-tabbar-item>
+    <van-tabbar route fixed placeholder class="mobile-tabbar mobile-only" active-color="#1989fa" inactive-color="#999">
+      <van-tabbar-item replace to="/home" icon="wap-home-o">首页</van-tabbar-item>
+      
+      <van-tabbar-item replace to="/publish">
+        <template #icon>
+          <div class="publish-btn-wrapper">
+            <van-icon name="plus" class="publish-icon" />
+          </div>
+        </template>
+        <span style="font-weight: bold; color: #333;">发布</span>
+      </van-tabbar-item>
+
+      <van-tabbar-item replace to="/message" icon="chat-o">消息</van-tabbar-item>
       <van-tabbar-item replace to="/mine" icon="user-o">我的</van-tabbar-item>
     </van-tabbar>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-const active = ref(0);
+// 全局布局组件，无需额外 JS 逻辑
 </script>
 
 <style scoped>
-.app-container {
-  width: 100%;
+/* 全局清爽背景色 */
+.app-layout {
   min-height: 100vh;
+  background-color: #f5f7fa; 
+}
+
+/* 底部导航条增加柔和阴影，去掉顶部黑线 */
+.mobile-tabbar {
+  box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.04);
+}
+:deep(.van-tabbar::after) {
+  display: none;
+}
+
+/* 🚀 核心设计：向上凸起的发布按钮 */
+.publish-btn-wrapper {
+  background: #1989fa; /* 主题蓝 */
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: -22px; /* 往上移，形成凸起效果 */
+  box-shadow: 0 4px 12px rgba(25, 137, 250, 0.4);
+  border: 4px solid #fff; 
+  transition: transform 0.2s;
+}
+.publish-btn-wrapper:active {
+  transform: scale(0.95);
+}
+.publish-icon {
+  color: #fff;
+  font-size: 24px;
+  font-weight: bold;
 }
 
-/* 移动端默认状态：给底部导航栏留出空间 */
-.main-content {
-  flex: 1;
-}
-
-/* 🚀 核心媒体查询：当屏幕 >= 768px (PC/平板) 时触发 */
+/* 🚀 多端响应式控制：屏幕大于 768px (PC) 时，隐藏手机端特有元素 */
 @media (min-width: 768px) {
-  /* 1. 强行隐藏底部导航栏 */
-  .mobile-tabbar {
+  .mobile-only {
     display: none !important;
-  }
-  /* 2. PC端不需要给底部留白了，取消 padding-bottom */
-  .main-content {
-    padding-bottom: 0 !important; 
   }
 }
 </style>

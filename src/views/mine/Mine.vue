@@ -46,7 +46,7 @@
             <van-grid-item icon="pending-payment" text="待付款" @click="goToOrder(1)" />
             <van-grid-item icon="play-circle-o" text="租赁中" @click="goToOrder(2)" />
             <van-grid-item icon="passed" text="已完成" @click="goToOrder(3)" />
-            <van-grid-item icon="service-o" text="售后/退款" @click="goTo('/after-sales')" />
+            <van-grid-item icon="service-o" text="售后/退款" @click="goTo('/after-sales')" /> 
           </van-grid>
         </div>
 
@@ -132,6 +132,9 @@ const handleLogout = () => {
     message: '确认要退出当前账号吗？',
     confirmButtonColor: '#ff3b30'
   }).then(() => {
+    // 🚀 核心：清除本地存的登录凭证
+    localStorage.removeItem('token');
+    
     showToast('已退出登录');
     router.replace('/login');
   }).catch(() => {});

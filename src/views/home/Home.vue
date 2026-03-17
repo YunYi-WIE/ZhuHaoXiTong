@@ -1,64 +1,75 @@
 <template>
-  <div class="responsive-home-page">
-    
+  <div class="home-page">
     <NavBar activeMenu="home" />
 
-    <main class="main-content">
-      
-      <div class="mobile-search-wrap mobile-only">
-        <van-search 
-          v-model="searchKeyword" 
-          placeholder="搜索您想要的极品账号" 
-          shape="round" 
-          background="transparent" 
-          class="mobile-custom-search"
-          @search="handleSearch"
-        />
-      </div>
-
-      <div class="banner-wrap">
+    <main class="home-content">
+      <div class="banner-section">
         <van-swipe class="my-swipe" :autoplay="3000" indicator-color="white">
-          <van-swipe-item v-for="(img, index) in bannerList" :key="index">
-            <img :src="img" class="banner-img active-shadow" />
+          <van-swipe-item>
+            <div class="banner-card promo-bg">
+              <div class="promo-content">
+                <h3 class="neon-text-blue">更多福利活动</h3>
+                <p>请关注微信公众号：辰辉电竞</p>
+                <div class="search-bar-mock">关注后即可领取优惠券</div>
+              </div>
+              <img src="@/assets/logo.png" class="banner-avatar" />
+            </div>
           </van-swipe-item>
         </van-swipe>
       </div>
 
-      <van-grid :column-num="4" :border="false" class="nav-grid esports-grid">
-        <van-grid-item text="王者荣耀" @click="goTo('/lobby')">
-          <template #icon><van-icon name="fire-o" class="grid-icon neon-fire" /></template>
-        </van-grid-item>
-        <van-grid-item text="和平精英" @click="goTo('/lobby')">
-          <template #icon><van-icon name="aim" class="grid-icon neon-aim" /></template>
-        </van-grid-item>
-        <van-grid-item text="极品连体" @click="goTo('/lobby')">
-          <template #icon><van-icon name="gem-o" class="grid-icon neon-gem" /></template>
-        </van-grid-item>
-        <van-grid-item text="特价捡漏" @click="goTo('/lobby')">
-          <template #icon><van-icon name="gift-o" class="grid-icon neon-gift" /></template>
-        </van-grid-item>
-      </van-grid>
+      <div class="grid-nav-section">
+        <div class="grid-item" v-for="(nav, index) in navList" :key="index" @click="handleNav(nav.path)">
+          <div class="icon-box" :style="{ background: nav.color }">
+            <van-icon :name="nav.icon" />
+          </div>
+          <span>{{ nav.name }}</span>
+        </div>
+      </div>
 
-      <div class="list-section">
-        <h3 class="section-title neon-section-title">
-          精选好号 <span class="subtitle">官方包赔 放心租</span>
-        </h3>
-        <div class="responsive-account-grid">
-          <div v-for="item in hotAccounts" :key="item.id" class="account-card" @click="goToDetail(item.id)">
+      <div class="account-list-section">
+        <div class="filter-action-bar">
+          <van-tabs v-model:active="activeTab" class="custom-tabs" shrink>
+            <van-tab title="资产号租赁" name="asset" />
+            <van-tab title="人在秒上号" name="online" />
+            <van-tab title="🔥 特价" name="sale" />
+            <van-tab title="账号交易" name="trade" />
+          </van-tabs>
+          
+          <van-button icon="filter-o" size="small" class="pc-filter-btn" @click="openFilter">
+            高级筛选
+          </van-button>
+        </div>
+
+        <div class="account-grid">
+          <div class="account-card" v-for="item in mockAccounts" :key="item.id" @click="goToDetail(item.id)">
             <div class="card-cover">
-              <img :src="item.cover" />
-              <span class="tag">{{ item.tag }}</span>
+              <img :src="item.cover" alt="封面" />
+              <div class="asset-tag">{{ item.currency }} 暗区币</div>
             </div>
+            
             <div class="card-info">
               <h4 class="title">{{ item.title }}</h4>
-              <div class="price-row">
-                <span class="price">￥<b>{{ item.price }}</b>/小时</span>
+              <div class="specs-tags">
+                <span>{{ item.rank }}</span>
+                <span>{{ item.safe }}</span>
+                <span>{{ item.method }}</span>
+              </div>
+              <div class="price-line">
+                <span class="price-tag">￥<b>{{ item.price }}</b>/小时</span>
+                <van-button size="mini" type="primary" round>立即租号</van-button>
               </div>
             </div>
+          </div>
+
+          <div v-if="mockAccounts.length === 0" class="empty-wrap">
+            <van-empty description="暂无相关账号数据" />
           </div>
         </div>
       </div>
     </main>
+
+    <FilterPanel ref="filterRef" />
   </div>
 </template>
 
@@ -66,107 +77,290 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import NavBar from '@/components/NavBar.vue';
+import FilterPanel from './FilterPanel.vue';
 
 const router = useRouter();
-const searchKeyword = ref('');
+const filterRef = ref(null);
+const activeTab = ref('asset');
 
-const bannerList = ref([
-  'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200',
-  'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200'
-]);
-
-const hotAccounts = ref([
-  { id: 1, title: '【秒发】V10全英雄全皮肤/武则天', price: '5.80', cover: 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg', tag: '包赔' },
-  { id: 2, title: '和平精英 玛莎拉蒂/火箭少女101', price: '4.00', cover: 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg', tag: '免押' },
-  { id: 3, title: '原神 满命夜兰/极品深渊号', price: '6.50', cover: 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg', tag: '包赔' },
-  { id: 4, title: '永劫无间 极品皮肤全套', price: '3.20', cover: 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg', tag: '优惠' },
-  { id: 5, title: '金铲铲之战 全棋盘全特效', price: '2.50', cover: 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg', tag: '热租' }
-]);
-
-const handleSearch = () => {
-  if (!searchKeyword.value) return;
-  router.push({ path: '/lobby', query: { q: searchKeyword.value } });
+const openFilter = () => {
+  if (filterRef.value) {
+    filterRef.value.show = true;
+  }
 };
-const goTo = (path) => router.push(path);
-const goToDetail = (id) => router.push(`/detail/${id}`);
+
+// 金刚区导航数据
+const navList = [
+  { name: '代肝', icon: 'fire-o', color: '#00d26a', path: '/lobby' },
+  { name: '3x3代肝', icon: 'gem-o', color: '#ff4d4f', path: '/lobby' },
+  { name: '最新活动', icon: 'hot-o', color: '#ff7a45', path: '/publish' },
+  { name: '资讯中心', icon: 'notes-o', color: '#1890ff', path: '/message' },
+  { name: '在线客服', icon: 'chat-o', color: '#722ed1', path: 'kefu' },
+];
+
+// 模拟的账号列表数据（确保页面有内容展示）
+const mockAccounts = ref([
+  { 
+    id: 1, 
+    title: '【顶级资产】200M暗区币+全套金皮+3x3安全箱 极品账号', 
+    currency: '201M', 
+    rank: '传说段位', 
+    safe: '3x3保险箱', 
+    method: '扫码上号', 
+    price: 8.5, 
+    cover: 'https://img0.baidu.com/it/u=3023530335,2241577789&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=281' 
+  },
+  { 
+    id: 2, 
+    title: '暗区币100M AWM多多 极品号 低价出租 速度上号', 
+    currency: '105M', 
+    rank: '王牌段位', 
+    safe: '2x3保险箱', 
+    method: '账号密码', 
+    price: 5.0, 
+    cover: 'https://img0.baidu.com/it/u=3023530335,2241577789&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=281' 
+  },
+  { 
+    id: 3, 
+    title: '满配红皮 负重7级 极速上号 资产丰富 稳定不掉', 
+    currency: '80M', 
+    rank: '大师段位', 
+    safe: '2x2保险箱', 
+    method: '扫码上号', 
+    price: 3.8, 
+    cover: 'https://img0.baidu.com/it/u=3023530335,2241577789&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=281' 
+  },
+  { 
+    id: 4, 
+    title: '特价纯金号 / 500M物资 / 随时可玩', 
+    currency: '520M', 
+    rank: '王牌段位', 
+    safe: '3x3保险箱', 
+    method: '免码直连', 
+    price: 12.0, 
+    cover: 'https://img0.baidu.com/it/u=3023530335,2241577789&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=281' 
+  }
+]);
+
+const handleNav = (path) => {
+  if (path === 'kefu') return; // 在线客服暂不跳转
+  router.push(path);
+};
+
+const goToDetail = (id) => {
+  router.push(`/detail/${id}`);
+};
 </script>
 
 <style scoped>
-.responsive-home-page {
-  background: linear-gradient(to bottom, #1900ff 0%, #ffffff 90%);
-  background-attachment: fixed;
-  min-height: 100vh;
-  color: #fff;
+/* 全局基础样式 */
+.home-page { 
+  min-height: 100vh; 
+  background-color: #ffffff; 
+}
+.home-content { 
+  max-width: 1200px; 
+  margin: 0 auto; 
+  padding: 15px; 
 }
 
-.main-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 60px 15px 15px 15px; /* 上留出 NavBar 空间，下留出 Tabbar 空间 */
+/* 1. 宣传栏样式 */
+.banner-section { 
+  margin-bottom: 25px; 
+  border-radius: 12px; 
+  overflow: hidden; 
+}
+.banner-card { 
+  height: 160px; 
+  background: linear-gradient(135deg, #e0f7fa 0%, #ffffff 100%); 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+  padding: 0 30px; 
+}
+.promo-content h3 { 
+  color: #333; 
+  margin-bottom: 5px; 
+  font-size: 20px; 
+  font-weight: 900;
+}
+.promo-content p {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.search-bar-mock {
+  background: rgba(0,0,0,0.05);
+  padding: 6px 15px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #555;
+  display: inline-block;
+}
+.banner-avatar { 
+  width: 80px; 
+  height: 80px; 
+  border-radius: 15px; 
 }
 
-/* 手机端搜索框磨砂样式 */
-:deep(.mobile-custom-search) { padding: 10px 0 !important; }
-:deep(.mobile-custom-search .van-search__content) {
-  background: rgba(0, 0, 0, 0.3) !important;
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 20px !important;
+/* 2. 金刚区样式 */
+.grid-nav-section { 
+  display: grid; 
+  grid-template-columns: repeat(5, 1fr); 
+  gap: 10px; 
+  margin-bottom: 30px; 
+  text-align: center; 
 }
-:deep(.van-field__control) { color: #fff !important; }
-
-/* 轮播与金刚区 */
-.banner-wrap { border-radius: 12px; overflow: hidden; margin: 10px 0 20px 0; transform: translateZ(0); }
-.banner-img { width: 100%; height: 160px; object-fit: cover; display: block; }
-.nav-grid { margin-bottom: 20px; }
-:deep(.esports-grid .van-grid-item__content) { background: rgba(23, 28, 38, 0.8) !important; border-radius: 10px; margin: 0 5px; padding: 15px 0; }
-:deep(.van-grid-item__text) { color: #bbb !important; margin-top: 8px; font-size: 12px; }
-.grid-icon { font-size: 28px; }
-.neon-fire { color: #ff3b30; text-shadow: 0 0 8px #ff3b30; }
-.neon-aim { color: #07c160; text-shadow: 0 0 8px #07c160; }
-.neon-gem { color: #6f42c1; text-shadow: 0 0 8px #6f42c1; }
-.neon-gift { color: #ff9500; text-shadow: 0 0 8px #ff9500; }
-
-.section-title { font-size: 18px; margin-bottom: 15px; display: flex; align-items: baseline; gap: 10px; text-shadow: 0 0 5px rgba(255,255,255,0.4); }
-.subtitle { font-size: 12px; color: #ddd; font-weight: normal; }
-
-/* 账号卡片 */
-.account-card {
-  background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column;
+.grid-item { 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  gap: 8px; 
+  cursor: pointer; 
 }
-.account-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
-.card-cover { height: 140px; position: relative; background: #eee; }
-.card-cover img { width: 100%; height: 100%; object-fit: cover; }
-.card-cover .tag { position: absolute; top: 8px; left: 8px; background: #ff3b30; color: #fff; font-size: 10px; padding: 3px 6px; border-radius: 4px; }
-.card-info { padding: 12px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
-.title { color: #333; font-size: 14px; font-weight: bold; margin: 0 0 10px 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.price { color: #ff3b30; font-size: 12px; }
-.price b { font-size: 20px; }
-
-/* 📱 手机端适配 */
-@media (max-width: 767px) {
-  .mobile-only { display: block; }
-  .responsive-account-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.icon-box { 
+  width: 48px; 
+  height: 48px; 
+  border-radius: 16px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  color: #fff; 
+  font-size: 24px; 
+}
+.grid-item span { 
+  font-size: 12px; 
+  color: #333; 
+  font-weight: 500; 
 }
 
-/* 💻 PC 端适配 */
+/* 3. 筛选条样式 */
+.filter-action-bar { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  padding: 0 5px; 
+  margin-bottom: 20px; 
+}
+:deep(.custom-tabs .van-tabs__nav) {
+  background: transparent;
+}
+:deep(.custom-tabs .van-tab--active) {
+  font-weight: bold;
+  color: #1989fa;
+}
+.pc-filter-btn { 
+  border-radius: 8px; 
+  background: #f7f8fa; 
+  border: none; 
+  color: #666; 
+  width: 100px; 
+}
+
+/* 4. 账号卡片样式 */
+.account-grid { 
+  display: grid; 
+  grid-template-columns: repeat(1, 1fr); 
+  gap: 15px; 
+}
+.account-card { 
+  background: #fff; 
+  border-radius: 16px; 
+  overflow: hidden; 
+  border: 1px solid #f0f0f0; 
+  transition: 0.3s; 
+  cursor: pointer; 
+}
+.account-card:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  transform: translateY(-3px);
+}
+.card-cover { 
+  position: relative; 
+  height: 150px; 
+  background: #eee;
+}
+.card-cover img { 
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover; 
+}
+.asset-tag { 
+  position: absolute; 
+  bottom: 8px; 
+  left: 8px; 
+  background: rgba(0,0,0,0.7); 
+  color: #ffcc00; 
+  font-size: 11px; 
+  padding: 4px 8px; 
+  border-radius: 6px; 
+  font-weight: bold; 
+}
+.card-info { 
+  padding: 15px; 
+}
+.title { 
+  font-size: 14px; 
+  color: #333; 
+  margin-bottom: 10px; 
+  line-height: 1.4; 
+  height: 40px; 
+  display: -webkit-box; 
+  -webkit-line-clamp: 2; 
+  -webkit-box-orient: vertical; 
+  overflow: hidden; 
+  font-weight: bold;
+}
+.specs-tags { 
+  display: flex; 
+  gap: 6px; 
+  margin-bottom: 15px; 
+  flex-wrap: wrap;
+}
+.specs-tags span { 
+  font-size: 11px; 
+  background: #f0f7ff; 
+  color: #1989fa; 
+  padding: 3px 8px; 
+  border-radius: 4px; 
+}
+.price-line { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+}
+.price-tag { 
+  color: #ff4d4f; 
+  font-size: 12px; 
+}
+.price-tag b { 
+  font-size: 18px; 
+  font-weight: 900;
+}
+.empty-wrap { 
+  grid-column: 1 / -1; 
+  padding: 50px 0; 
+}
+
+/* 🚀 PC端响应式优化 */
 @media (min-width: 768px) {
-  .mobile-only { display: none !important; }
-  
-  .banner-wrap { margin-top: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-  .banner-img { height: 400px; } 
-
-  .nav-grid { padding: 0 12% !important; margin-top: 35px; margin-bottom: 45px; }
-  :deep(.esports-grid .van-grid-item__content) { 
-    background: rgba(23, 28, 38, 0.4) !important; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.08); padding: 30px 0; border-radius: 16px; transition: all 0.3s;
+  .home-content { 
+    padding: 30px 40px; 
   }
-  :deep(.esports-grid .van-grid-item__content:hover) { background: rgba(23, 28, 38, 0.8) !important; border-color: rgba(0, 229, 255, 0.5); transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2); }
-  .grid-icon { font-size: 48px; margin-bottom: 12px; }
-  :deep(.van-grid-item__text) { font-size: 15px !important; color: #fff !important; }
-
-  .section-title { font-size: 24px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.15); }
-  
-  .responsive-account-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; }
-  .card-cover { height: 160px; } 
-  .title { font-size: 15px; margin-bottom: 15px; }
+  .banner-card { 
+    height: 260px; 
+  }
+  .grid-nav-section {
+    gap: 40px;
+  }
+  .icon-box {
+    width: 64px;
+    height: 64px;
+    font-size: 32px;
+  }
+  .account-grid { 
+    grid-template-columns: repeat(3, 1fr); /* 🚀 PC端一行显示 3 个 */
+    gap: 25px; 
+  }
 }
 </style>
