@@ -1,147 +1,70 @@
 <template>
-  <div class="account-card user-card" @click="goToDetail">
-    <div class="cover-box">
-      <img :src="item.cover" class="cover-img" />
-      <div class="server-tag">{{ item.server }}</div>
-      <div v-if="item.isBao" class="bao-tag">包赔</div>
+  <div class="account-card" v-if="info" @click="$emit('click')">
+    <div class="card-image">
+      <van-image :src="getCover(info.images)" fit="cover" radius="8" />
+      <div class="region-tag">{{ info.gameRegion || '全区服' }}</div>
     </div>
-    <div class="info-box">
-      <h4 class="title">{{ item.title }}</h4>
-      <div class="tags">
-        <span 
-          v-for="(tag, index) in item.tags" 
-          :key="tag" 
-          class="tag"
-          :class="'tag-text-color-' + (index % 4)"
-        >
-          {{ tag }}
-        </span>
+    <div class="card-info">
+      <div class="title van-multi-ellipsis--l2">{{ info.title }}</div>
+      <div class="params">
+        <van-tag plain type="primary" v-if="info.accountLevel">{{ info.accountLevel }}</van-tag>
+        <van-tag plain type="success" v-if="info.tags">{{ info.tags.split(',')[0] }}</van-tag>
       </div>
+      <div v-if="info.ratioLine" class="ratio-line">{{ info.ratioLine }}</div>
       <div class="price-row">
-        <span class="price">￥<b>{{ item.price }}</b> /小时</span>
-        <button class="rent-btn">立即租</button>
+        <span class="price">￥{{ info.pricePerHour }}<small>/时</small></span>
+        <div class="price-row__btns">
+          <van-button size="mini" type="warning" plain round @click.stop="$emit('reserve')">预约</van-button>
+          <van-button size="mini" type="primary" round @click.stop="$emit('rent')">租号</van-button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router';
-
-const props = defineProps({
-  item: {
+defineProps({
+  info: {
     type: Object,
-    required: true
+    required: true,
+    default: () => null
   }
 });
 
-const router = useRouter();
-const goToDetail = () => {
-  router.push('/detail'); // 点击卡片跳到详情页
+defineEmits(['click', 'reserve', 'rent']);
+
+// 提取第一张图片的辅助函数
+const getCover = (images) => {
+  if (images && typeof images === 'string') {
+    return images.split(',')[0];
+  }
+  return 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg'; // 兜底默认图
 };
 </script>
 
 <style scoped>
-/* 🚀 核心：白底黑字卡片主体 */
-.account-card.user-card {
-  display: flex;
-  background: #ffffff; /* 核心：白底 */
-  border-radius: 12px;
-  padding: 10px;
-  margin-bottom: 15px;
-  border: none;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
+/* 样式保持你原来的不变即可 */
+.account-card { background: #fff; border-radius: 12px; overflow: hidden; margin-bottom: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); cursor: pointer; }
+.card-image { position: relative; height: 132px; width: 100%; }
+:deep(.van-image) { width: 100%; height: 100%; }
+.region-tag { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.6); color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; z-index: 1; }
+.card-info { padding: 10px; }
+.title { font-size: 14px; font-weight: bold; color: #333; height: 40px; margin-bottom: 8px; line-height: 20px; }
+.params { display: flex; gap: 5px; margin-bottom: 10px; }
+.ratio-line { font-size: 11px; color: #888; line-height: 1.35; margin: 0 0 8px; }
+.price-row { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.price-row__btns { display: flex; gap: 6px; flex-shrink: 0; }
+.price { color: #ee0a24; font-size: 16px; font-weight: bold; }
+.price small { font-size: 11px; font-weight: normal; }
+
+@media (max-width: 380px) {
+  .card-image { height: 118px; }
+  .card-info { padding: 8px; }
+  .title { font-size: 13px; line-height: 18px; height: 36px; margin-bottom: 6px; }
+  .price { font-size: 15px; }
 }
 
-.account-card.user-card:active {
-  transform: scale(0.98);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+@media (min-width: 768px) {
+  .card-image { height: 140px; }
 }
-
-/* 左侧图片区 */
-.cover-box {
-  width: 100px;
-  height: 100px;
-  border-radius: 8px;
-  overflow: hidden;
-  position: relative;
-  flex-shrink: 0;
-}
-.cover-img { width: 100%; height: 100%; object-fit: cover; }
-
-/* 区服标签 */
-.server-tag {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  font-size: 11px;
-  text-align: center;
-  padding: 3px 0;
-  backdrop-filter: blur(2px);
-}
-
-/* 渐变包赔标 */
-.bao-tag {
-  position: absolute;
-  top: 0; left: 0;
-  background: linear-gradient(135deg, #ff3b30, #ff8000);
-  color: #fff;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-bottom-right-radius: 8px;
-  font-weight: bold;
-}
-
-/* 右侧信息区 */
-.info-box {
-  margin-left: 12px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-/* 核心：卡片标题白底黑字 */
-.title {
-  margin: 0;
-  font-size: 14px;
-  color: #000; /* 核心：黑字 */
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-}
-
-/* 🚀 核心：标签彩色字体 */
-.tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
-.tag {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-/* 根据索引循环使用不同的彩色字体 */
-.tag-text-color-0 { color: #07c160; background: rgba(7, 193, 96, 0.1); }
-.tag-text-color-1 { color: #ff8000; background: rgba(255, 128, 0, 0.1); }
-.tag-text-color-2 { color: #1677ff; background: rgba(22, 119, 255, 0.1); }
-.tag-text-color-3 { color: #ff3b30; background: rgba(255, 59, 48, 0.1); }
-
-/* 底部价格与按钮 */
-.price-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
-.price { color: #ff3b30; font-size: 12px; }
-.price b { font-size: 18px; font-family: DINAlternate-Bold, sans-serif; }
-
-/* 按钮镂空设计 */
-.rent-btn {
-  background: transparent;
-  border: 1px solid #ff3b30;
-  color: #ff3b30;
-  padding: 4px 12px;
-  border-radius: 15px;
-  font-size: 12px;
-  font-weight: bold;
-}
-.rent-btn:active { background: #ff3b30; color: #fff; }
 </style>

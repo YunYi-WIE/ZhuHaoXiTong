@@ -3,6 +3,21 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
+  build: {
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (id.includes('vant')) return 'vant'
+          if (id.includes('vue-router') || id.includes('pinia') || id.includes('/vue/'))
+            return 'vue-vendor'
+          if (id.includes('axios')) return 'axios'
+          if (id.includes('qrcode')) return 'qrcode'
+        },
+      },
+    },
+  },
   plugins: [
     vue(),
   ],
@@ -11,20 +26,21 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
-  // 👇 新增：配置开发服务器跨域代理
+  // 👇 注意！server 必须和 plugins、resolve 是平级的（同级兄弟节点）
   server: {
-    // 🚀 新增：允许局域网和公网访问
-    host: '0.0.0.0', 
-    // 🚀 新增：把你的 cpolar 域名加入白名单
-    allowedHosts: [
-      '5b5fd72b.r38.cpolar.top', // 你当前的域名
-      '.cpolar.top'              // 加上这个泛域名，以后 cpolar 域名变了也不用再改代码！
-    ],
+    host: '0.0.0.0',
+    allowedHosts: true,
+    port: 8080,
     proxy: {
+      // 只要请求路径以 /api 开头，就会被转发到 target
       '/api': {
-        target: 'http://ce77d45.r39.cpolar.top', // 你的后端接口地址
-        changeOrigin: true, // 允许跨域
-        // 如果后端接口本身就带有 /api，这里就不用 rewrite
+        target: 'http://localhost:26080',
+        changeOrigin: true
+      },
+      // 如果后台接口以 /admin 开头，也一并转发
+      '/admin': {
+        target: 'http://localhost:26080',
+        changeOrigin: true
       }
     }
   }

@@ -4,8 +4,8 @@
 
     <div class="login-wrapper">
       <div class="brand-box">
-        <img src="@/assets/logo.png" class="login-logo glow-effect" />
-        <h2 class="brand-name neon-text">哈小龙小店</h2>
+        <img :src="brandLogo" class="login-logo glow-effect" alt="" />
+        <h2 class="brand-name neon-text">{{ siteName }}</h2>
         <p class="brand-slogan">全网最专业的游戏账号租赁平台</p>
       </div>
 
@@ -51,8 +51,19 @@
           </div>
 
           <div v-show="showQrCode" class="qr-code-wrapper">
-            <div id="wechat-qrcode"></div>
-            <p class="cancel-text" @click="showQrCode = false">取消扫码</p>
+            <div class="mock-qrcode">
+              <img src="https://fastly.jsdelivr.net/npm/@vant/assets/qrcode.png" alt="微信二维码" class="qrcode-image" />
+              <div class="qrcode-overlay">
+                <van-icon name="wechat" size="40" color="#07c160" />
+                <p class="scan-tips">请使用微信扫描二维码</p>
+                <p class="mock-tips">（待接客户真实微信配置）</p>
+              </div>
+            </div>
+            <div class="qrcode-actions">
+              <van-button size="small" type="primary" plain @click="handleMockScan">确认扫码登录</van-button>
+              <van-button size="small" type="default" @click="showQrCode = false">取消</van-button>
+            </div>
+            <p class="mock-description">当前为预留接入模式，客户配置 AppID 后可切换真实微信授权</p>
           </div>
         </div>
       </div>
@@ -70,94 +81,64 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useRouter, useRoute } from 'vue-router';
-import { showSuccessToast, showFailToast, showLoadingToast } from 'vant';
-// 🚀 引入所有的 auth API，包括刚写的微信登录 API
-import { sendCodeApi, loginByPasswordApi, loginByCodeApi, loginByWechatApi } from '@/api/auth';
+import { showSuccessToast, showFailToast, showLoadingToast, closeToast } from 'vant';
+import { sendCodeApi, loginByPasswordApi, loginByWechatApi, getWechatLoginConfigApi } from '@/api/auth';
+import { useSiteBrandingStore } from '@/stores/siteBranding';
+
+const branding = useSiteBrandingStore();
+const { siteName, effectiveLogo: brandLogo } = storeToRefs(branding);
 
 const router = useRouter();
 const route = useRoute(); // 用于获取 URL 参数
-const activeTab = ref('mobile'); 
+const activeTab = ref('password'); // 默认显示密码登录，验证码登录接口未实现 
 const checked = ref(false); 
 const isSending = ref(false);
 const countdown = ref(0);
 const showQrCode = ref(false);
+const wechatConfig = ref({ appId: '', configured: false });
 
 const loginForm = reactive({
   phone: '',
   code: '',
-  username: '',
-  password: ''
+  username: '13336879228',
+  password: '123456',
 });
 
-// ==========================================
-// 🚀 核心：拦截微信授权回调，调用后端 API
-// ==========================================
 onMounted(async () => {
-  // 1. 从网址栏提取微信返回的 code 参数
   const wxCode = route.query.code;
-  
-  // 2. 如果存在 code，说明是从微信授权跳回来的
+  try {
+    const conf = await getWechatLoginConfigApi();
+    wechatConfig.value = {
+      appId: conf?.appId || '',
+      configured: !!conf?.configured
+    };
+  } catch (_) {
+    wechatConfig.value = { appId: '', configured: false };
+  }
   if (wxCode) {
-    showLoadingToast({ message: '正在登录...', forbidClick: true, duration: 0 });
-    
-    try {
-      // 3. 调用后端提供的真实 API，传入 wxCode
-      const res = await loginByWechatApi(wxCode);
-      
-      // 4. 登录成功，保存后端返回的 token
-      localStorage.setItem('token', res.token || res);
-      showSuccessToast('微信登录成功！');
-      
-      // 5. 跳转到租号大厅（使用 replace 防止用户按返回键又回到带有 code 的网址）
-      router.replace('/lobby'); 
-    } catch (error) {
-      // 失败的话（例如 code 过期），清理网址参数留在登录页
-      showFailToast(error.message || '微信登录失败');
-      router.replace('/login');
-    }
+    await completeWechatLogin(String(wxCode));
   }
 });
 
-// ==========================================
-// 🚀 点击微信图标，发起微信授权请求
-// ==========================================
 const handleWechatLogin = () => {
   if (!checked.value) return showFailToast('请先阅读并勾选协议');
-  
-  // 区分环境：如果是手机微信内置浏览器打开，走 H5 授权；如果是 PC 端，走扫码
   const isWechatBrowser = /MicroMessenger/i.test(navigator.userAgent);
 
-  const APP_ID = 'wx86001ff5b480c6d1'; // ⚠️ 请替换为你真实的 AppID
-  const REDIRECT_URI = encodeURIComponent(window.location.origin + '/login');
-
-  if (isWechatBrowser) {
-    // 【手机微信环境】直接跳微信授权页
-    showLoadingToast({ message: '正在拉取授权...', forbidClick: true });
-    const wxAuthUrl = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${APP_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=snsapi_userinfo&state=STATE#wechat_redirect`;
-    window.location.href = wxAuthUrl;
-  } else {
-    // 【电脑浏览器环境】使用上一次教你的内嵌二维码方案
-    showQrCode.value = true;
-    
-    setTimeout(() => {
-      const script = document.createElement('script');
-      script.src = 'https://res.wx.qq.com/connect/zh_CN/htmledition/js/wxLogin.js';
-      document.body.appendChild(script);
-
-      script.onload = () => {
-        new window.WxLogin({
-          self_redirect: false,
-          id: "wechat-qrcode", 
-          appid: APP_ID, 
-          scope: "snsapi_login", 
-          redirect_uri: REDIRECT_URI,
-          state: "STATE",
-          style: "black"
-        });
-      };
-    }, 100); // 稍微延迟等待 DOM 渲染
+  if (isWechatBrowser && wechatConfig.value.configured && wechatConfig.value.appId) {
+    const appId = encodeURIComponent(wechatConfig.value.appId);
+    const redirectUri = encodeURIComponent(`${window.location.origin}${window.location.pathname}`);
+    const state = encodeURIComponent('hxl_login');
+    const authUrl = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_userinfo&state=${state}#wechat_redirect`;
+    window.location.href = authUrl;
+    return;
   }
+  if (isWechatBrowser) {
+    showFailToast('微信AppID尚未配置，请联系管理员配置后再使用');
+    return;
+  }
+  showQrCode.value = true;
 };
 
 // 发送验证码
@@ -179,30 +160,87 @@ const handleSendCode = async () => {
     }, 1000);
   } catch (error) {
     isSending.value = false;
+    showFailToast(error.message || '发送验证码失败');
   }
 };
 
 // 登录
 const handleLogin = async () => {
   if (!checked.value) return showFailToast('请先阅读并勾选协议');
-  showLoadingToast({ message: '登录中...', forbidClick: true });
+  showLoadingToast({ message: '登录中...', forbidClick: true, duration: 0 });
 
   try {
     let res;
     if (activeTab.value === 'mobile') {
-      if (!loginForm.phone || !loginForm.code) return showFailToast('请填写完整');
-      res = await loginByCodeApi({ phone: loginForm.phone, code: loginForm.code });
-    } else {
-      if (!loginForm.username || !loginForm.password) return showFailToast('请填写完整');
-      res = await loginByPasswordApi({ phone: loginForm.username, password: loginForm.password });
+      closeToast();
+      showFailToast('验证码登录功能暂未开放，请使用密码登录');
+      activeTab.value = 'password';
+      if (loginForm.phone && !loginForm.username) {
+        loginForm.username = loginForm.phone;
+      }
+      return;
     }
-    
-    // 假设后端返回的 token 在 res.token 中，如果直接是字符串则为 res
-    localStorage.setItem('token', res.token || res || 'dummy_token'); 
+    if (!loginForm.username || !loginForm.password) {
+      closeToast();
+      return showFailToast('请填写完整');
+    }
+    const smsVo = await sendCodeApi(String(loginForm.username).trim());
+    const smsCode = smsVo?.smsCode;
+    if (!smsCode) {
+      closeToast();
+      return showFailToast('获取验证码失败，请稍后重试');
+    }
+    res = await loginByPasswordApi({
+      phone: String(loginForm.username).trim(),
+      password: loginForm.password,
+      smsCode,
+    });
+
+    const actualToken = res.tokenValue || res.token || res;
+    localStorage.setItem('token', actualToken);
+    closeToast();
     showSuccessToast('登录成功！');
-    router.push('/home');
+    const redirect = route.query?.redirect ? String(route.query.redirect) : '';
+    if (redirect && redirect.startsWith('/')) {
+      router.replace(redirect);
+    } else {
+      router.push('/home');
+    }
   } catch (error) {
-    // 报错已在 request.js 拦截器中提示
+    closeToast();
+    showFailToast(error?.message || '登录失败');
+  }
+};
+
+const handleMockWechatLogin = async () => {
+  const mockCode = 'mock_wx_code_' + Date.now();
+  await completeWechatLogin(mockCode, true);
+};
+
+// 模拟扫码按钮点击
+const handleMockScan = async () => {
+  await handleMockWechatLogin();
+};
+
+const completeWechatLogin = async (code, closeQr = false) => {
+  showLoadingToast({ message: '正在微信登录...', forbidClick: true, duration: 0 });
+  try {
+    const res = await loginByWechatApi(code);
+    const actualToken = res.tokenValue || res.token || res;
+    localStorage.setItem('token', actualToken);
+    showSuccessToast('微信登录成功！');
+    const redirect = route.query?.redirect ? String(route.query.redirect) : '';
+    if (redirect && redirect.startsWith('/')) {
+      router.replace(redirect);
+    } else {
+      router.replace('/home');
+    }
+  } catch (error) {
+    showFailToast(error.message || '微信登录失败');
+    router.replace('/login');
+  } finally {
+    closeToast();
+    if (closeQr) showQrCode.value = false;
   }
 };
 </script>
@@ -239,25 +277,123 @@ const handleLogin = async () => {
 .protocol-box { margin-top: auto; padding: 30px 0 20px 0; display: flex; justify-content: center; z-index: 10; }
 .protocol-text { color: #666666; font-size: 12px; }
 .link { color: #1900ff; cursor: pointer; font-weight: bold; }
-@media (min-width: 768px) { .login-wrapper { justify-content: center; padding-top: 20px; } .brand-box { margin-top: 15px; } .protocol-box { margin-top: 30px; flex-grow: 0; } }
-/* 扫码二维码容器样式 */
+
+@media (max-width: 380px) {
+  .login-wrapper {
+    padding: 12px 10px;
+  }
+  .brand-box {
+    margin-top: 0;
+    margin-bottom: 18px;
+  }
+  .login-logo {
+    width: 64px;
+    height: 64px;
+  }
+  .brand-name {
+    font-size: 20px;
+    margin-top: 10px;
+  }
+  .login-card {
+    border-radius: 14px;
+    padding: 14px 10px 20px;
+  }
+  .custom-form {
+    margin-top: 14px;
+  }
+  .submit-wrap {
+    margin-top: 18px;
+  }
+  .protocol-box {
+    padding-top: 16px;
+  }
+}
+
+@media (min-width: 768px) {
+  .login-wrapper {
+    justify-content: center;
+    padding-top: 20px;
+  }
+  .brand-box {
+    margin-top: 15px;
+  }
+  .protocol-box {
+    margin-top: 30px;
+    flex-grow: 0;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1099px) {
+  .login-card {
+    max-width: 500px;
+  }
+}
+/* 模拟二维码容器样式 */
 .qr-code-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-top: 15px;
+  padding: 20px;
+  background: #f9f9f9;
+  border-radius: 12px;
+  border: 1px solid #eee;
+}
+
+.mock-qrcode {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin-bottom: 20px;
+}
+
+.qrcode-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  filter: blur(1px);
+  opacity: 0.8;
+}
+
+.qrcode-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+}
+
+.scan-tips {
   margin-top: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
 }
-#wechat-qrcode {
-  height: 300px; /* 微信二维码默认高度 */
-}
-.cancel-text {
+
+.mock-tips {
+  font-size: 12px;
   color: #999;
-  font-size: 13px;
-  cursor: pointer;
   margin-top: 5px;
-  transition: color 0.2s;
 }
-.cancel-text:hover {
-  color: #ff3b30;
+
+.qrcode-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.mock-description {
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+  margin-top: 10px;
+  max-width: 300px;
+  line-height: 1.4;
 }
 </style>

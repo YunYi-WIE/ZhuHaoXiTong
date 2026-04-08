@@ -1,35 +1,50 @@
 @import './base.css';
 
+:root {
+  --bp-xs: 380px;
+  --bp-sm: 768px;
+  --bp-md: 1100px;
+  --page-max: 1200px;
+  --page-pad-mobile: 12px;
+  --page-pad-tablet: 20px;
+  --page-pad-desktop: 32px;
+}
+
+html, body, #app {
+  width: 100%;
+  min-height: 100%;
+}
+
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
   font-weight: normal;
 }
 
-a,
-.green {
+a {
   text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
+img {
+  max-width: 100%;
+}
+
+/* 通用响应式容器 */
+.page-shell {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding-left: var(--page-pad-mobile);
+  padding-right: var(--page-pad-mobile);
+}
+
+@media (min-width: 768px) {
+  .page-shell {
+    padding-left: var(--page-pad-tablet);
+    padding-right: var(--page-pad-tablet);
   }
 }
 
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
+@media (min-width: 1100px) {
+  .page-shell {
+    padding-left: var(--page-pad-desktop);
+    padding-right: var(--page-pad-desktop);
   }
 }

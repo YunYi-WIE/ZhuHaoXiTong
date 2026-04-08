@@ -1,0 +1,99 @@
+# 全栈一键：MySQL + Redis + 后端 + C 端 + 后台。
+# 数据库连接已写死在后端 application-fixed.yml（mysql/redis 为 compose 服务名）；默认 root 密码见下方 MYSQL_ROOT_PASSWORD。
+#
+# 无需 .env，直接：
+#   docker compose -f docker-compose.all-in-one.yml up -d --build
+#
+# 首次启动会导入 zuhaowaibao/sql/hxl_rent_full.sql（仅数据卷为空时）。
+# 改密码：改本文件 mysql.environment.MYSQL_ROOT_PASSWORD + zuhaowaibao/.../application-fixed.yml 里 rent.mysql.password
+
+name: zuhoo-stack-full
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ZuhooDeploy123
+      MYSQL_DATABASE: hxl_rent
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
+    ports:
+      - "3301:3306"
+    volumes:
+      - zuhoo_mysql_data:/var/lib/mysql
+      - ../../zuhaowaibao/sql/hxl_rent_full.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD || exit 1",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - zuhoo
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - zuhoo_redis_data:/data
+    restart: unless-stopped
+    networks:
+      - zuhoo
+
+  api:
+    build:
+      context: ../../zuhaowaibao
+      dockerfile: Dockerfile
+    image: zuhoo/api:latest
+    ports:
+      - "3001:26080"
+    environment:
+      SPRING_PROFILES_ACTIVE: fixed
+      TZ: Asia/Shanghai
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - zuhoo
+
+  h5:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: zuhoo/h5:latest
+    ports:
+      - "3002:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - zuhoo
+
+  admin:
+    build:
+      context: ../../admin-ui
+      dockerfile: Dockerfile
+    image: zuhoo/admin:latest
+    ports:
+      - "3003:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - zuhoo
+
+volumes:
+  zuhoo_mysql_data:
+  zuhoo_redis_data:
+
+networks:
+  zuhoo:
+    name: zuhoo_net_full

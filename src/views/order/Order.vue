@@ -1,229 +1,456 @@
 <template>
   <div class="order-page">
-    
-    <NavBar activeMenu="none" class="desktop-only" />
+    <NavBar activeMenu="mine" class="desktop-nav-bar" />
 
-    <van-nav-bar 
-      title="我的订单" 
-      left-arrow 
-      @click-left="router.back()"
-      class="mobile-nav mobile-only transparent-nav"
-      :border="false"
+    <van-nav-bar
+      title="我的订单"
+      left-arrow
+      @click-left="router.push('/mine')"
+      fixed
       placeholder
+      z-index="999"
+      class="mobile-nav-bar"
     />
 
-    <main class="main-content">
-      <div class="order-tabs-wrapper glass-card">
-        <van-tabs 
-          v-model:active="activeTab" 
-          sticky 
-          :offset-top="isDesktop ? 60 : 0"
-          color="#1900ff" 
-          animated
-          @change="onTabChange"
+    <main class="order-container page-shell">
+      <van-tabs v-model:active="activeTab" sticky offset-top="46px" color="#1989fa" @change="onTabChange">
+        <van-tab title="全部" name="all" />
+        <van-tab title="待付款" name="0" />
+        <van-tab title="租赁中" name="1" />
+        <van-tab title="已完成" name="2" />
+        <van-tab title="售后/仲裁" name="aftersale" />
+      </van-tabs>
+
+      <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
+        <van-list
+          v-model:loading="loading"
+          :finished="finished"
+          finished-text="没有更多订单了"
+          @load="onLoad"
+          class="order-list"
         >
-          <van-tab title="全部" :name="0"></van-tab>
-          <van-tab title="待支付" :name="1"></van-tab>
-          <van-tab title="租赁中" :name="2"></van-tab>
-          <van-tab title="已完成" :name="3"></van-tab>
-        </van-tabs>
-      </div>
+          <van-empty
+            v-if="!loading && filteredOrders.length === 0 && finished"
+            :description="activeTab === 'aftersale' ? '暂无售后/仲裁订单' : '暂无订单'"
+          />
 
-      <div class="order-list">
-        <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
-          <van-list
-            v-model:loading="loading"
-            :finished="finished"
-            finished-text="~ 没有更多订单了 ~"
-            @load="onLoad"
-          >
-            <div v-for="item in orderList" :key="item.id" class="order-card glass-card">
-              <div class="order-header">
-                <span class="order-sn">订单号：{{ item.sn }}</span>
-                <span class="order-status" :class="'status-' + item.status">{{ getStatusText(item.status) }}</span>
-              </div>
-              
-              <div class="order-body" @click="goToDetail(item.id)">
-                <img :src="item.cover" class="order-img" />
-                <div class="order-info">
-                  <h4 class="title">{{ item.title }}</h4>
-                  <p class="desc">租赁时长：{{ item.duration }}小时</p>
-                  <p class="time">下单时间：{{ item.time }}</p>
-                </div>
-              </div>
+          <div class="order-card" v-for="order in filteredOrders" :key="order.id">
+            <div class="card-header">
+              <span class="shop-name"><van-icon name="shop-o" /> 平台自营</span>
+              <span class="status-text">{{ getStatusText(order.status) }}</span>
+            </div>
 
-              <div class="order-footer">
-                <div class="total-price">实付：<span>￥{{ item.price }}</span></div>
-                <div class="actions">
-                  <van-button size="small" round v-if="item.status === 1" color="#ff3b30" @click="goToPay(item)">立即支付</van-button>
-                  <van-button size="small" round v-if="item.status === 2" @click="showCode(item)">查看卡密</van-button>
-                  <van-button size="small" round plain v-if="item.status === 3" @click="goToAfterSales(item)">申请售后</van-button>
+            <div class="card-content" @click="goToDetail(order)">
+              <van-image
+                radius="8"
+                width="80"
+                height="80"
+                fit="cover"
+                :src="getCover(order) || 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg'"
+              />
+              <div class="info">
+                <h4 class="title van-ellipsis">{{ getTitle(order) }}</h4>
+                <p class="desc">
+                  租期：{{ formatOrderRent(order) }} | 订单号：{{ order.orderNo || order.id }}
+                </p>
+                <div class="price-row">
+                  <span class="price">￥{{ formatOrderAmount(order) }}</span>
+                  <span class="count">x1</span>
                 </div>
               </div>
             </div>
-          </van-list>
-        </van-pull-refresh>
-      </div>
+
+            <div class="card-footer">
+              <div class="time">下单时间：{{ formatOrderTime(order) }}</div>
+              <div class="btns">
+                <van-button
+                  v-if="order.status === 0"
+                  size="small"
+                  round
+                  type="primary"
+                  @click.stop="goToPay(order.id)"
+                >
+                  去支付
+                </van-button>
+                <van-button
+                  v-if="order.status === 1 || order.status === 2"
+                  size="small"
+                  round
+                  @click.stop="goToDetail(order)"
+                >
+                  查看详情
+                </van-button>
+                <van-button
+                  v-if="order.status === 1 || order.status === 2"
+                  size="small"
+                  round
+                  type="primary"
+                  plain
+                  @click.stop="goMessage(order)"
+                >
+                  去群聊
+                </van-button>
+                <van-button
+                  v-if="canCreateDispute(order)"
+                  size="small"
+                  round
+                  type="warning"
+                  plain
+                  @click.stop="goToDispute(order.id)"
+                >
+                  售后/仲裁
+                </van-button>
+                <van-button
+                  v-if="order.status === 1"
+                  size="small"
+                  round
+                  type="success"
+                  plain
+                  @click.stop="handleFinish(order)"
+                >
+                  发起结账
+                </van-button>
+                <van-button
+                  v-if="order.status === 0"
+                  size="small"
+                  round
+                  plain
+                  type="danger"
+                  @click.stop="handleCancel(order)"
+                >
+                  取消订单
+                </van-button>
+              </div>
+            </div>
+          </div>
+        </van-list>
+      </van-pull-refresh>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { showConfirmDialog, showToast } from 'vant';
 import NavBar from '@/components/NavBar.vue';
+import { getMyOrderList, getOrderDetail, cancelOrder, finishOrder } from '@/api/order';
+import { extractListRecords } from '@/utils/extractRecords';
+import {
+  getOrderPayAmount,
+  getOrderRentLabel,
+  getOrderGoodsTitle,
+  getOrderCoverUrl,
+  getOrderTimeText,
+  unwrapOrderPayload,
+} from '@/utils/orderDisplay';
+import {
+  getDisputeOrderIds,
+  isAftersaleTabOrder,
+  dedupeOrdersById,
+} from '@/utils/disputeOrder';
+import { ORDER_STATUS_ALLOW_CREATE_DISPUTE } from '@/config/orderDisputePolicy';
 
 const router = useRouter();
 const route = useRoute();
 
-// 🚀 根据路由参数初始化 Tab 状态
-const activeTab = ref(Number(route.query.active) || 0);
-const orderList = ref([]);
+/** 与后端 OrderStatusEnum 一致：0待支付 1租赁中 2已完成 3已取消 */
+const activeTab = ref('all');
 const loading = ref(false);
 const finished = ref(false);
 const refreshing = ref(false);
 
-// 判断是否为电脑端（用于动态调整 sticky 偏移量）
-const isDesktop = computed(() => window.innerWidth >= 768);
+const filteredOrders = ref([]);
+const pageParams = { current: 1, size: 10 };
 
-const getStatusText = (status) => {
-  const map = { 1: '待支付', 2: '租赁中', 3: '已完成' };
-  return map[status] || '已取消';
+const listStatusParam = () => {
+  if (
+    activeTab.value === 'all' ||
+    activeTab.value === '' ||
+    activeTab.value == null ||
+    activeTab.value === 'aftersale'
+  ) {
+    return undefined;
+  }
+  const n = Number(activeTab.value);
+  return Number.isFinite(n) ? n : undefined;
 };
 
-const onLoad = () => {
-  setTimeout(() => {
-    if (refreshing.value) {
-      orderList.value = [];
-      refreshing.value = false;
+const sortOrdersByTimeDesc = (list) => {
+  const t = (o) =>
+    new Date(o.createTime ?? o.createdAt ?? o.orderTime ?? 0).getTime();
+  return [...list].sort((a, b) => t(b) - t(a));
+};
+
+/** 售后/仲裁：仅已发起售后（hasDispute=1 + 列表字段过滤；首屏合并 session 中刚提交的订单） */
+const loadAftersaleMerged = async (isRefresh) => {
+  try {
+    if (isRefresh) {
+      pageParams.current = 1;
+      finished.value = false;
     }
 
-    const mockData = [
-      { id: 1, sn: 'SN88481234', title: '【秒发】V10全英雄全皮肤/绝版武则天', price: '23.20', duration: 4, status: 2, time: '2023-10-26 14:20', cover: 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg' },
-      { id: 2, sn: 'SN88481235', title: '和平精英 玛莎拉蒂/火箭少女101', price: '12.00', duration: 3, status: 1, time: '2023-10-26 15:30', cover: 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg' }
-    ];
-    
-    orderList.value.push(...mockData);
+    const c = pageParams.current;
+    const sz = pageParams.size;
+
+    let rawList = [];
+    try {
+      const res = await getMyOrderList({
+        current: c,
+        size: sz,
+        hasDispute: 1,
+      });
+      rawList = extractListRecords(res);
+    } catch (e) {
+      console.warn('[售后列表] 拉取失败，将尝试仅展示本地已申请订单', e);
+    }
+
+    const exhausted = rawList.length < sz;
+    let records = rawList.filter((row) => isAftersaleTabOrder(row));
+
+    if (isRefresh && c === 1) {
+      const have = new Set(records.map((r) => String(r.id)));
+      const missing = getDisputeOrderIds().filter((id) => !have.has(id)).slice(0, 25);
+      const extras = [];
+      for (const id of missing) {
+        try {
+          const raw = await getOrderDetail(id);
+          const o = unwrapOrderPayload(raw) || raw;
+          if (o && isAftersaleTabOrder(o)) extras.push(o);
+        } catch (_) {
+          /* 忽略单条失败 */
+        }
+      }
+      records = sortOrdersByTimeDesc(dedupeOrdersById([...records, ...extras]));
+    }
+
+    if (isRefresh) {
+      filteredOrders.value = records;
+    } else {
+      const existing = new Set(filteredOrders.value.map((o) => String(o.id)));
+      const append = records.filter((o) => !existing.has(String(o.id)));
+      filteredOrders.value = [...filteredOrders.value, ...append];
+    }
+
+    if (exhausted) {
+      finished.value = true;
+    } else {
+      pageParams.current += 1;
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('加载订单失败');
+    finished.value = true;
+  } finally {
     loading.value = false;
-    if (orderList.value.length >= 10) finished.value = true;
-  }, 1000);
+    refreshing.value = false;
+  }
+};
+
+const loadOrders = async (isRefresh) => {
+  if (activeTab.value === 'aftersale') {
+    return loadAftersaleMerged(isRefresh);
+  }
+  try {
+    if (isRefresh) {
+      pageParams.current = 1;
+      finished.value = false;
+    }
+
+    const params = {
+      current: pageParams.current,
+      size: pageParams.size,
+    };
+    const st = listStatusParam();
+    if (st !== undefined) params.status = st;
+
+    const res = await getMyOrderList(params);
+    const records = extractListRecords(res);
+
+    if (isRefresh) {
+      filteredOrders.value = records;
+    } else {
+      filteredOrders.value = [...filteredOrders.value, ...records];
+    }
+
+    if (!records.length || records.length < pageParams.size) {
+      finished.value = true;
+    } else {
+      pageParams.current += 1;
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('加载订单失败');
+    finished.value = true;
+  } finally {
+    loading.value = false;
+    refreshing.value = false;
+  }
+};
+
+const applyQueryTab = () => {
+  const q = route.query.status;
+  if (q === undefined || q === null || q === '') {
+    activeTab.value = 'all';
+    return;
+  }
+  const s = String(q);
+  if (s === 'all') {
+    activeTab.value = 'all';
+    return;
+  }
+  if (s === 'aftersale') {
+    activeTab.value = 'aftersale';
+    return;
+  }
+  if (['0', '1', '2'].includes(s)) {
+    activeTab.value = s;
+    return;
+  }
+  activeTab.value = 'all';
+};
+
+onMounted(() => {
+  applyQueryTab();
+});
+
+watch(
+  () => route.query.status,
+  () => {
+    applyQueryTab();
+    loadOrders(true);
+  }
+);
+
+const onTabChange = () => {
+  loading.value = true;
+  loadOrders(true);
 };
 
 const onRefresh = () => {
-  finished.value = false;
-  loading.value = true;
-  onLoad();
+  refreshing.value = true;
+  loadOrders(true);
 };
 
-const onTabChange = (name) => {
-  onRefresh();
+const onLoad = () => {
+  if (finished.value) {
+    loading.value = false;
+    return;
+  }
+  loadOrders(false);
 };
 
-const goToDetail = (id) => router.push(`/detail/${id}`);
-const goToPay = (item) => router.push('/pay');
-const goToAfterSales = (item) => router.push('/after-sales');
-const showCode = (item) => { /* 查看卡密逻辑 */ };
+const getStatusText = (status) => {
+  const map = {
+    0: '待付款',
+    1: '租赁中',
+    2: '已完成',
+    3: '已取消',
+  };
+  return map[status] ?? map[Number(status)] ?? '未知';
+};
+
+const getTitle = (order) => getOrderGoodsTitle(order);
+const getCover = (order) => getOrderCoverUrl(order);
+const formatOrderAmount = (order) => {
+  const n = getOrderPayAmount(order);
+  if (Number.isFinite(n) && n > 0) return n.toFixed(2);
+  const fallback = Number(order.totalAmount ?? order.price ?? order.actualAmount ?? 0);
+  return Number.isFinite(fallback) ? fallback.toFixed(2) : '0.00';
+};
+const formatOrderRent = (order) => getOrderRentLabel(order).label;
+const formatOrderTime = (order) => {
+  const t = getOrderTimeText(order);
+  if (!t) return '—';
+  return t.includes('T') ? t.replace('T', ' ').slice(0, 19) : t;
+};
+
+const goToPay = (id) => {
+  router.push({ path: '/pay', query: { orderId: String(id) } });
+};
+
+const goToDispute = (id) => {
+  router.push({ path: `/order/dispute/${id}` });
+};
+
+const goMessage = (order) => {
+  const oid = order?.id;
+  router.push({
+    path: '/message',
+    query: oid != null ? { orderId: String(oid) } : {},
+  });
+};
+
+const canCreateDispute = (order) => {
+  const st = Number(order?.status ?? order?.orderStatus);
+  return (
+    Number.isFinite(st) && ORDER_STATUS_ALLOW_CREATE_DISPUTE.includes(st)
+  );
+};
+
+/** 待付去收银台；已付/完成/取消进入订单详情（含结算明细） */
+const goToDetail = (order) => {
+  if (order.status === 0) {
+    goToPay(order.id);
+    return;
+  }
+  router.push({ path: `/order/detail/${order.id}` });
+};
+
+const handleCancel = (order) => {
+  showConfirmDialog({
+    title: '取消订单',
+    message: '确定取消该待付款订单？',
+  })
+    .then(async () => {
+      try {
+        await cancelOrder(order.id);
+        showToast('已取消');
+        loadOrders(true);
+      } catch (e) {
+        showToast(e?.message || '取消失败');
+      }
+    })
+    .catch(() => {});
+};
+
+const handleFinish = (order) => {
+  showConfirmDialog({
+    title: '确认完成',
+    message: '确认租赁已结束？订单将设为已完成（具体以服务端处理为准）。',
+  })
+    .then(async () => {
+      try {
+        await finishOrder(order.id);
+        showToast('操作成功');
+        loadOrders(true);
+      } catch (e) {
+        showToast(e?.message || '操作失败');
+      }
+    })
+    .catch(() => {});
+};
 </script>
 
 <style scoped>
-/* =========================================
-   全局基础设定 (紫蓝电竞风)
-   ========================================= */
-.order-page {
-  background: linear-gradient(to bottom, #1900ff 0%, #ffffff 90%);
-  background-attachment: fixed;
-  min-height: 100vh;
-}
+.order-page { min-height: 100vh; background-color: #f7f8fa; padding-bottom: 20px; }
+.order-container { max-width: 760px; }
+.order-list { padding: 12px; }
+.order-card { background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 13px; }
+.shop-name { font-weight: bold; color: #333; }
+.status-text { color: #ee0a24; font-weight: bold; }
+.card-content { display: flex; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid #f5f5f5; }
+.info { flex: 1; min-width: 0; }
+.info .title { margin: 0; font-size: 14px; color: #333; }
+.info .desc { font-size: 12px; color: #999; margin: 4px 0; }
+.price-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.price { color: #333; font-weight: bold; font-size: 15px; }
+.count { color: #999; font-size: 12px; }
+.card-footer { padding-top: 12px; }
+.card-footer .time { font-size: 11px; color: #bbb; margin-bottom: 10px; }
+.btns { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 
-/* 手机端透明返回栏 */
-:deep(.transparent-nav) { background: transparent !important; }
-:deep(.transparent-nav .van-nav-bar__title) { color: #fff !important; font-weight: bold; text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
-
-/* 玻璃卡片通用材质 */
-.glass-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-}
-
-/* =========================================
-   内容布局
-   ========================================= */
-.order-tabs-wrapper {
-  margin-bottom: 15px;
-  overflow: hidden;
-}
-:deep(.van-tabs__nav) { background: transparent; }
-
-.order-card {
-  padding: 15px;
-  margin-bottom: 15px;
-}
-
-.order-header {
-  display: flex;
-  justify-content: space-between;
-  padding-bottom: 12px;
-  border-bottom: 1px dashed #eee;
-  font-size: 13px;
-}
-.order-sn { color: #999; }
-.order-status { font-weight: bold; }
-.status-1 { color: #ff3b30; }
-.status-2 { color: #1900ff; }
-.status-3 { color: #07c160; }
-
-.order-body {
-  display: flex;
-  gap: 12px;
-  padding: 15px 0;
-  cursor: pointer;
-}
-.order-img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; }
-.order-info { flex: 1; }
-.order-info .title { font-size: 14px; color: #333; margin: 0 0 8px 0; line-height: 1.4; font-weight: bold; }
-.order-info p { margin: 4px 0; font-size: 12px; color: #999; }
-
-.order-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 12px;
-  border-top: 1px solid #f5f5f5;
-}
-.total-price { font-size: 13px; color: #666; }
-.total-price span { color: #ff3b30; font-size: 18px; font-weight: bold; font-family: 'DIN Alternate'; }
-
-.actions { display: flex; gap: 8px; }
-
-/* =========================================
-   ✨ 核心：多端响应式与宽度限制
-   ========================================= */
-
-/* --- 📱 手机端适配 --- */
-@media (max-width: 767px) {
-  .desktop-only { display: none !important; }
-  .main-content { padding: 10px 15px 70px 15px; }
-}
-
-/* --- 💻 电脑端适配 (>= 768px) --- */
-@media (min-width: 768px) {
-  .mobile-only { display: none !important; }
-  
-  /* 🚀 限制宽带：限制在 800px，订单列表不需要太宽，否则信息太散 */
-  .main-content {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 80px 15px 50px 15px; 
-  }
-
-  .order-card {
-    transition: transform 0.2s;
-  }
-  .order-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-  }
-}
+@media (min-width: 768px) { .mobile-nav-bar { display: none !important; } }
+@media (max-width: 767px) { .desktop-nav-bar { display: none !important; } }
 </style>

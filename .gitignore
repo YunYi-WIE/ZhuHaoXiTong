@@ -37,3 +37,20 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# env (never commit real secrets)
+.env
+.env.*
+!.env.example
+!docker/.env.example
+
+# local docx/temp artifacts
+_docx_extract/
+_docx_extract2/
+_docx_tmp/
+_docx_tmp.zip
+_docx_requirements.txt
+
+# local helper scripts / bundles
+dist.rar
+_req.zip

@@ -3,8 +3,8 @@
     <header class="responsive-header">
       <div class="header-inner">
         <div class="logo-box" @click="goTo('/home')">
-          <img src="@/assets/logo.png" class="logo-img" />
-          <span class="brand-name">狙击电竞</span>
+          <img :src="brandLogo" class="logo-img" alt="" />
+          <span class="brand-name">{{ siteName }}</span>
         </div>
 
         <nav class="desktop-nav desktop-only">
@@ -24,6 +24,10 @@
             <van-icon name="user-circle-o" size="20" />
             <span>个人中心</span>
           </div>
+          <div class="mobile-actions">
+            <van-icon name="chat-o" size="20" @click="goTo('/message')" />
+            <van-icon :name="isLoggedIn ? 'contact' : 'user-o'" size="20" @click="goTo(isLoggedIn ? '/mine' : '/login')" />
+          </div>
         </div>
       </div>
     </header>
@@ -32,7 +36,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useRouter, useRoute } from 'vue-router';
+import { useSiteBrandingStore } from '@/stores/siteBranding';
+
+const branding = useSiteBrandingStore();
+const { siteName, effectiveLogo: brandLogo } = storeToRefs(branding);
 
 const router = useRouter();
 const route = useRoute(); // 用于判断当前页面高亮
@@ -67,13 +76,23 @@ const goTo = (path) => router.push(path);
 .logo-img { width: 32px; height: 32px; border-radius: 6px; }
 .brand-name { font-size: 18px; font-weight: 900; color: #333; letter-spacing: 1px; }
 
-/* 🚀 多端响应式：手机端隐藏桌面特有元素 */
+/* 手机端隐藏桌面元素 */
 @media (max-width: 767px) { 
   .desktop-only { display: none !important; } 
+  .brand-name { font-size: 16px; letter-spacing: 0.5px; }
 }
 
-/* 🚀 多端响应式：PC端样式 */
-@media (min-width: 768px) {
+/* 平板与桌面：保留导航，压缩间距 */
+@media (min-width: 768px) and (max-width: 1099px) {
+  .desktop-only { display: flex !important; }
+  .desktop-nav { display: flex; gap: 18px; margin-left: 18px; }
+  .desktop-search { flex: 1; max-width: 220px; margin: 0 16px; }
+  .nav-item { font-size: 14px; }
+  .header-actions { display: flex; align-items: center; gap: 12px; }
+}
+
+/* 大屏桌面样式 */
+@media (min-width: 1100px) {
   .desktop-only { display: flex !important; }
   .desktop-nav { display: flex; gap: 30px; margin-left: 50px; }
   
@@ -90,5 +109,18 @@ const goTo = (path) => router.push(path);
   .header-actions { display: flex; align-items: center; gap: 20px; }
   .login-text, .user-menu { font-size: 14px; color: #555; cursor: pointer; font-weight: 600; transition: color 0.2s; display: flex; align-items: center; gap: 5px; }
   .login-text:hover, .user-menu:hover { color: #1989fa; }
+}
+
+.mobile-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #475569;
+}
+
+@media (min-width: 768px) {
+  .mobile-actions {
+    display: none;
+  }
 }
 </style>

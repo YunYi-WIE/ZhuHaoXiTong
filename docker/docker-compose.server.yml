@@ -1,0 +1,49 @@
+# 服务器：已推镜像后使用，与本机 compose 共用 .env（数据库仍走外部 MYSQL/REDIS）
+# 启动：docker compose -f docker-compose.server.yml --env-file .env up -d
+name: zuhoo-stack
+
+services:
+  api:
+    image: ${REGISTRY}/zuhoo-api:${IMAGE_TAG:-latest}
+    ports:
+      - "${API_PORT:-26080}:26080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      TZ: Asia/Shanghai
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_PORT: ${MYSQL_PORT:-3306}
+      MYSQL_USER: ${MYSQL_USER:-root}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-hxl_rent}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    networks:
+      - zuhoo
+
+  h5:
+    image: ${REGISTRY}/zuhoo-h5:${IMAGE_TAG:-latest}
+    ports:
+      - "${H5_PORT:-8080}:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - zuhoo
+
+  admin:
+    image: ${REGISTRY}/zuhoo-admin:${IMAGE_TAG:-latest}
+    ports:
+      - "${ADMIN_PORT:-8081}:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - zuhoo
+
+networks:
+  zuhoo:
+    name: zuhoo_net
